@@ -1,0 +1,5 @@
+{
+  "name": "KWE Recruit Machine",
+  "description": "A powerful CRM-like tool to manage and automate recruitment outreach for real estate agents, inspired by a Google Apps Script. It helps in tracking potential recruits, generating customized WhatsApp messages, and managing contact statuses efficiently.",
+  "requestFramePermissions": []
+}
