@@ -9,10 +9,11 @@ const parseCsvLine = (line: string): string[] => {
     let inQuotes = false;
     for (let i = 0; i < line.length; i++) {
         const char = line[i];
-        if (char === '"' && (i === 0 || line[i-1] !== '"')) { // handle simple quotes, not escaped ones
+        if (char === '"') {
+             // Handle "" as an escaped quote inside a quoted field
              if(inQuotes && i < line.length - 1 && line[i+1] === '"') {
                  current += '"';
-                 i++;
+                 i++; // Skip the next quote
              } else {
                 inQuotes = !inQuotes;
              }
@@ -26,6 +27,38 @@ const parseCsvLine = (line: string): string[] => {
     result.push(current.trim());
     return result;
 };
+
+// ** THE FIX **: A robust line splitter that correctly handles newlines within quoted fields.
+const robustSplitLines = (text: string): string[] => {
+    const rows: string[] = [];
+    let currentRow = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        
+        if (char === '"') {
+            // Toggle inQuotes state. This simple toggle works because we're only splitting lines,
+            // not parsing fields here. The more complex field parser will handle escaped quotes.
+            inQuotes = !inQuotes;
+        }
+
+        if (char === '\n' && !inQuotes) {
+            // If we find a newline and we're NOT inside quotes, it's a real row delimiter.
+            rows.push(currentRow.replace(/\r$/, ''));
+            currentRow = '';
+        } else {
+            // Otherwise, just append the character to the current row being built.
+            currentRow += char;
+        }
+    }
+    // Add the last line if the text doesn't end with a newline
+    if (currentRow) {
+        rows.push(currentRow.replace(/\r$/, ''));
+    }
+    
+    return rows.filter(row => row.trim() !== '');
+};
+
 
 // Flexible mapping to accommodate different column names from user sheets.
 const headerMapping: { key: keyof Recruit; possibleNames: string[] }[] = [
@@ -47,15 +80,13 @@ const headerMapping: { key: keyof Recruit; possibleNames: string[] }[] = [
 ];
 
 export const parseSheetCSV = (csvText: string): Recruit[] => {
-    // ** THE FIX **: Normalize input to handle both Tab-Separated and Comma-Separated data.
     const normalizedText = csvText.replace(/\t/g, ',');
-    const lines = normalizedText.trim().replace(/\r\n/g, '\n').split('\n');
+    const lines = robustSplitLines(normalizedText);
 
     if (lines.length === 0) return [];
     
     const headerLine = lines.shift() as string;
     
-    // Header Sanity Check: If the first line doesn't contain at least one common header, it's not the right data.
     const headerContent = headerLine.toLowerCase();
     const commonHeaders = ['name', 'phone', 'contact', 'suburb', 'email', 'agency', 'status', 'ref'];
     const hasValidHeader = commonHeaders.some(h => headerContent.includes(h));
@@ -64,7 +95,6 @@ export const parseSheetCSV = (csvText: string): Recruit[] => {
         throw new Error("Import Failed: The pasted text does not look like a valid CSV from your sheet. The first line should be a header row containing columns like 'Name', 'Phone', etc.");
     }
     
-    // Normalize headers to be lowercase for case-insensitive matching
     const headers = parseCsvLine(headerLine).map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
     
     const mappedIndices: { [key in keyof Recruit]?: number } = {};
@@ -78,14 +108,12 @@ export const parseSheetCSV = (csvText: string): Recruit[] => {
     const finalRecruits: Omit<Recruit, 'id'>[] = [];
 
     for (const line of lines) {
-        // Stage 1: Skip structurally empty lines immediately.
         if (line.trim() === '' || line.replace(/,/g, '').trim() === '') {
             continue;
         }
 
         const values = parseCsvLine(line).map(v => v.trim().replace(/^"|"$/g, ''));
         
-        // Stage 2: Check for substance. If all parsed cells are empty, it's a "ghost" row.
         const hasSubstantiveData = values.some(v => v !== '');
         if (!hasSubstantiveData) {
             continue;
@@ -113,12 +141,10 @@ export const parseSheetCSV = (csvText: string): Recruit[] => {
             }
         }
         
-        // Stage 3: Final check for actionability. Must have a name or phone.
         if (!recruit.name && !recruit.phone) {
             continue;
         }
 
-        // If all checks pass, add it to our list of valid recruits.
         finalRecruits.push({
             listingType: ListingType.None,
             listingRef: '',
@@ -139,7 +165,6 @@ export const parseSheetCSV = (csvText: string): Recruit[] => {
         });
     }
 
-    // Assign sequential IDs at the very end to the clean list.
     return finalRecruits.map((recruit, index) => ({
         ...recruit,
         id: index + 1,

@@ -76,8 +76,6 @@ root.render(
   "requestFramePermissions": []
 }`,
   
-  // NOTE: This App.tsx content is a snapshot for the download feature.
-  // The actual running App.tsx is the one in the main directory.
   appTsx: `import React, { useState, useCallback, useMemo } from 'react';
 import type { Recruit } from './types';
 import { ListingType, Status } from './types';
@@ -419,7 +417,6 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onSetup, onClean, onRerun, onSetDefaultStatus, onSync, onDownloadSource }) => {
-    // FIX: Replaced unsupported <style jsx> with direct Tailwind classes for buttons.
     const btnHeaderClasses = "flex items-center justify-center gap-2 px-3 py-2 bg-base-300 text-base-content rounded-md text-xs font-semibold hover:bg-brand-primary hover:text-white transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-base-100 focus:ring-brand-accent";
 
     return (
@@ -970,10 +967,11 @@ const parseCsvLine = (line: string): string[] => {
     let inQuotes = false;
     for (let i = 0; i < line.length; i++) {
         const char = line[i];
-        if (char === '"' && (i === 0 || line[i-1] !== '"')) { // handle simple quotes, not escaped ones
+        if (char === '"') {
+             // Handle "" as an escaped quote inside a quoted field
              if(inQuotes && i < line.length - 1 && line[i+1] === '"') {
                  current += '"';
-                 i++;
+                 i++; // Skip the next quote
              } else {
                 inQuotes = !inQuotes;
              }
@@ -987,6 +985,38 @@ const parseCsvLine = (line: string): string[] => {
     result.push(current.trim());
     return result;
 };
+
+// ** THE FIX **: A robust line splitter that correctly handles newlines within quoted fields.
+const robustSplitLines = (text: string): string[] => {
+    const rows: string[] = [];
+    let currentRow = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        
+        if (char === '"') {
+            // Toggle inQuotes state. This simple toggle works because we're only splitting lines,
+            // not parsing fields here. The more complex field parser will handle escaped quotes.
+            inQuotes = !inQuotes;
+        }
+
+        if (char === '\\n' && !inQuotes) {
+            // If we find a newline and we're NOT inside quotes, it's a real row delimiter.
+            rows.push(currentRow.replace(/\\r$/, ''));
+            currentRow = '';
+        } else {
+            // Otherwise, just append the character to the current row being built.
+            currentRow += char;
+        }
+    }
+    // Add the last line if the text doesn't end with a newline
+    if (currentRow) {
+        rows.push(currentRow.replace(/\\r$/, ''));
+    }
+    
+    return rows.filter(row => row.trim() !== '');
+};
+
 
 // Flexible mapping to accommodate different column names from user sheets.
 const headerMapping: { key: keyof Recruit; possibleNames: string[] }[] = [
@@ -1010,7 +1040,7 @@ const headerMapping: { key: keyof Recruit; possibleNames: string[] }[] = [
 export const parseSheetCSV = (csvText: string): Recruit[] => {
     // ** THE FIX **: Normalize input to handle both Tab-Separated and Comma-Separated data.
     const normalizedText = csvText.replace(/\\t/g, ',');
-    const lines = normalizedText.trim().replace(/\\r\\n/g, '\\n').split('\\n');
+    const lines = robustSplitLines(normalizedText);
 
     if (lines.length === 0) return [];
     
