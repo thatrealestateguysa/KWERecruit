@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KW Explore — Recruit Machine</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn-tailwindcss.vercel.app/"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -73,6 +73,7 @@
                     <select name="listingType" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
                         <option>On Show</option>
                         <option>New Listing</option>
+                        <option>Rental</option>
                         <option selected>Other</option>
                     </select>
                      <select name="status" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
@@ -152,14 +153,12 @@
             "To Contact", "Whatsapp Sent", "No Whatsapp", "Replied", "Not Interested in KW",
             "Invite to Events/ Networking", "Appointment", "Ready to join KW"
         ];
-        // Define the exact order for table columns using their original sheet index
         const DISPLAY_ORDER = [
             COL_MAP.LISTING_TYPE, COL_MAP.LISTING_REF, COL_MAP.NAME, COL_MAP.SURNAME, 
-            COL_MAP.WHATSAPP_LINK, COL_MAP.STATUS, // <-- Moved columns
+            COL_MAP.WHATSAPP_LINK, COL_MAP.STATUS,
             COL_MAP.CONTACT_NUMBER, COL_MAP.EMAIL, COL_MAP.SUBURB, COL_MAP.AGENCY, 
             COL_MAP.LAST_CONTACT, COL_MAP.NOTES, COL_MAP.WHATSAPP_MESSAGE, COL_MAP.CONTACT_ID
         ];
-
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchData();
@@ -168,36 +167,61 @@
 
         let originalData = [];
         let tableHeaders = [];
-        let currentlyDisplayedData = [];
 
         function setupEventListeners() {
             document.getElementById('search-box').addEventListener('input', applyFilters);
             document.getElementById('filter-status').addEventListener('change', applyFilters);
             document.getElementById('filter-listing-type').addEventListener('change', applyFilters);
             document.getElementById('btn-reset-filters').addEventListener('click', resetFilters);
-            document.getElementById('btn-rerun').addEventListener('click', () => callScriptFunction('rerunAutomations'));
-            document.getElementById('btn-prepare').addEventListener('click', () => callScriptFunction('prepareSheet'));
-            document.getElementById('btn-fix-dropdowns').addEventListener('click', () => callScriptFunction('fixDataValidation'));
-            document.getElementById('btn-apply-bulk').addEventListener('click', applyBulkAction);
-            document.getElementById('btn-clear-selection').addEventListener('click', clearSelection);
+            document.getElementById('btn-rerun').addEventListener('click', () => callScriptFunctionAndRefresh('rerunAutomations'));
+            document.getElementById('btn-prepare').addEventListener('click', () => callScriptFunctionAndRefresh('prepareSheet'));
+            document.getElementById('btn-fix-dropdowns').addEventListener('click', () => callScriptFunctionAndRefresh('fixDataValidation'));
             document.getElementById('btn-add-recruit').addEventListener('click', openModal);
             document.getElementById('btn-cancel-add').addEventListener('click', closeModal);
             document.getElementById('add-recruit-form').addEventListener('submit', handleAddRecruit);
+            document.getElementById('btn-apply-bulk').addEventListener('click', applyBulkAction);
+            document.getElementById('btn-clear-selection').addEventListener('click', clearSelection);
             document.getElementById('table-body').addEventListener('change', handleSingleStatusChange);
         }
         
-        function handleSingleStatusChange(event) {
+        async function handleSingleStatusChange(event) {
             if (event.target.classList.contains('status-select-in-table')) {
                 const select = event.target;
-                const rowIndex = select.dataset.originalIndex; // This will now get the correct, permanent index
-                
-                if (rowIndex === undefined || rowIndex === null) {
-                    alert("An error occurred: The row could not be identified. Please try reloading the page.");
-                    console.error("handleSingleStatusChange failed: rowIndex is undefined.", event.target);
+                const rowIndex = select.dataset.originalIndex; 
+                if (rowIndex === undefined) {
+                    console.error("Row index is undefined. Cannot update status.");
                     return;
                 }
                 const newStatus = select.value;
-                callScriptFunction('updateSingleStatus', { rowIndex, newStatus });
+                const result = await callScriptFunction('updateSingleStatus', { rowIndex, newStatus });
+                if (result.success) {
+                    // --- NEW LOGIC: Update local data and re-apply filters ---
+                    const dataRow = originalData[rowIndex];
+                    dataRow[COL_MAP.STATUS] = newStatus;
+                    dataRow[COL_MAP.LAST_CONTACT] = new Date().toISOString(); // Approximate date
+                    applyFilters(); 
+                }
+            }
+        }
+        
+        async function applyBulkAction() {
+            const newStatus = document.getElementById('bulk-action-status').value;
+            if (!newStatus) return;
+            const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+            if (selectedCheckboxes.length === 0) return;
+            const rowIndices = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.originalIndex));
+            
+            const result = await callScriptFunction('bulkUpdateStatus', { rowIndices, newStatus });
+
+            if (result.success) {
+                // --- NEW LOGIC: Update local data and re-apply filters ---
+                rowIndices.forEach(index => {
+                    const dataRow = originalData[index];
+                    dataRow[COL_MAP.STATUS] = newStatus;
+                    dataRow[COL_MAP.LAST_CONTACT] = new Date().toISOString();
+                });
+                applyFilters();
+                clearSelection();
             }
         }
 
@@ -208,7 +232,7 @@
                 return;
             }
             try {
-                const response = await fetch(WEB_APP_URL, { method: 'GET', mode: 'cors', redirect: 'follow' });
+                const response = await fetch(WEB_APP_URL);
                 if (!response.ok) throw new Error(`Network response error: ${response.statusText}`);
                 const result = await response.json();
 
@@ -219,8 +243,6 @@
                          return;
                     }
                     tableHeaders = result.data.shift();
-                    // THE FIX: Augment each data row with its original 0-based index upon load.
-                    // This is more reliable than using indexOf() later.
                     originalData = result.data.map((row, index) => {
                         row.originalIndex = index;
                         return row;
@@ -231,7 +253,7 @@
                 } else { throw new Error(result.message); }
             } catch (error) {
                 console.error('Fetch Data Error:', error);
-                loaderText.innerText = `FETCH ERROR: ${error.message}.\n\n1. Check browser console (F12) for details.\n2. Ensure script is deployed correctly (Execute as Me, Access for Anyone).\n3. Make sure you completed the authorization steps.`;
+                loaderText.innerText = `FETCH ERROR: ${error.message}.\nCheck console for details.`;
             }
         }
         
@@ -254,14 +276,14 @@
             const statusFilter = document.getElementById('filter-status').value;
             const listingTypeFilter = document.getElementById('filter-listing-type').value;
 
-            currentlyDisplayedData = originalData.filter(row => {
+            const filteredData = originalData.filter(row => {
                 const searchString = [row[COL_MAP.NAME], row[COL_MAP.SURNAME], row[COL_MAP.SUBURB], row[COL_MAP.AGENCY]].join(' ').toLowerCase();
                 return searchString.includes(searchTerm) && 
                        (!statusFilter || row[COL_MAP.STATUS] === statusFilter) &&
                        (!listingTypeFilter || row[COL_MAP.LISTING_TYPE] === listingTypeFilter);
             });
-            renderTable(currentlyDisplayedData);
-            updateDashboardStats(currentlyDisplayedData);
+            renderTable(filteredData);
+            updateDashboardStats(filteredData);
         }
         
         function resetFilters() {
@@ -273,9 +295,8 @@
 
         function renderTable(data) {
             const tableHead = document.querySelector('thead tr');
-            const orderedHeaders = DISPLAY_ORDER.map(index => tableHeaders[index] || '');
+            const orderedHeaders = DISPLAY_ORDER.map(i => tableHeaders[i]);
             tableHead.innerHTML = `<th class="px-2 py-3"><input type="checkbox" id="select-all-checkbox"></th>` + orderedHeaders.map(h => `<th scope="col" class="px-6 py-3">${h}</th>`).join('');
-            
             document.getElementById('select-all-checkbox').addEventListener('change', (e) => {
                 document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
             });
@@ -287,27 +308,23 @@
             }
             
             tableBody.innerHTML = data.map(row => {
-                // THE FIX: Read the permanent originalIndex property from the row object.
                 const originalIndex = row.originalIndex;
-                
-                const orderedCells = DISPLAY_ORDER.map(index => {
-                    const content = row[index] ?? '';
-                    if (index === COL_MAP.STATUS) {
-                        const options = STATUS_OPTIONS.map(opt => 
-                            `<option value="${opt}" ${content === opt ? 'selected' : ''}>${opt}</option>`
-                        ).join('');
-                        return `<td class="px-6 py-4"><select class="status-select-in-table" data-original-index="${originalIndex}">${options}</select></td>`;
-                    }
-                    if (index === COL_MAP.WHATSAPP_LINK && String(content).startsWith('http')) {
-                        return `<td class="px-6 py-4"><a href="${content}" target="_blank" class="text-green-400 hover:underline font-semibold">Open Chat</a></td>`;
-                    }
-                    return `<td class="px-6 py-4">${content}</td>`;
-                }).join('');
-
+                const orderedRow = DISPLAY_ORDER.map(i => row[i]);
                 return `
                 <tr class="bg-bg-secondary border-b border-border-color hover:bg-bg-tertiary">
                     <td class="px-2 py-4"><input type="checkbox" class="row-checkbox" data-original-index="${originalIndex}"></td>
-                    ${orderedCells}
+                    ${orderedRow.map((cell, index) => {
+                        const originalColIndex = DISPLAY_ORDER[index];
+                        const content = cell ?? '';
+                        if (originalColIndex === COL_MAP.STATUS) {
+                            const options = STATUS_OPTIONS.map(opt => `<option value="${opt}" ${content === opt ? 'selected' : ''}>${opt}</option>`).join('');
+                            return `<td class="px-6 py-4"><select class="status-select-in-table" data-original-index="${originalIndex}">${options}</select></td>`;
+                        }
+                        if (originalColIndex === COL_MAP.WHATSAPP_LINK && String(content).startsWith('http')) {
+                            return `<td class="px-6 py-4"><a href="${content}" target="_blank" class="text-green-400 hover:underline font-semibold">Open Chat</a></td>`;
+                        }
+                        return `<td class="px-6 py-4">${content}</td>`;
+                    }).join('')}
                 </tr>
             `}).join('');
         }
@@ -322,16 +339,7 @@
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
             document.getElementById('stat-contacted7d').innerText = data.filter(r => r[COL_MAP.LAST_CONTACT] && new Date(r[COL_MAP.LAST_CONTACT]) >= sevenDaysAgo).length;
         }
-        
-        async function applyBulkAction() {
-            const newStatus = document.getElementById('bulk-action-status').value;
-            if (!newStatus) { alert('Please select a status to apply.'); return; }
-            const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
-            if (selectedCheckboxes.length === 0) { alert('Please select at least one row to update.'); return; }
-            const rowIndices = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.originalIndex));
-            await callScriptFunction('bulkUpdateStatus', { rowIndices, newStatus });
-        }
-        
+
         function clearSelection() {
             document.querySelectorAll('.row-checkbox:checked').forEach(cb => cb.checked = false);
             document.getElementById('select-all-checkbox').checked = false;
@@ -357,36 +365,46 @@
             e.preventDefault();
             const formData = new FormData(e.target);
             const payload = Object.fromEntries(formData.entries());
-            await callScriptFunction('addNewRecruit', payload);
+            await callScriptFunctionAndRefresh('addNewRecruit', payload);
             closeModal();
             e.target.reset();
         }
 
         async function callScriptFunction(action, payload = {}) {
-            const loader = document.getElementById('loader');
-            const loaderText = document.getElementById('loader-text');
-            loaderText.innerText = `Executing: ${action}...`;
-            loader.style.display = 'flex';
-            try {
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'POST', mode: 'cors', cache: 'no-cache',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action, payload })
-                });
-                const result = await response.json();
-                if (result.result === 'success') {
-                    if (action !== 'updateSingleStatus') {
-                         alert(`Success: ${result.message}`);
+            return new Promise(async (resolve) => {
+                const loader = document.getElementById('loader');
+                const loaderText = document.getElementById('loader-text');
+                loaderText.innerText = `Executing: ${action}...`;
+                loader.style.display = 'flex';
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        mode: 'cors',
+                        cache: 'no-cache',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action, payload })
+                    });
+                    const result = await response.json();
+                    if (result.result === 'success') {
+                        resolve({ success: true, message: result.message });
+                    } else {
+                        throw new Error(result.message);
                     }
-                    fetchData();
-                } else {
-                    throw new Error(result.message);
+                } catch (error) {
+                    alert(`An error occurred: ${error.message}`);
+                    console.error(`Error calling ${action}:`, error);
+                    resolve({ success: false });
+                } finally {
+                    loader.style.display = 'none';
                 }
-            } catch (error) {
-                alert(`An error occurred: ${error.message}`);
-                console.error(`Error calling ${action}:`, error);
-            } finally {
-                loader.style.display = 'none';
+            });
+        }
+        
+        async function callScriptFunctionAndRefresh(action, payload = {}) {
+            const result = await callScriptFunction(action, payload);
+            if(result.success) {
+                alert(`Success: ${result.message}`);
+                fetchData();
             }
         }
     </script>
