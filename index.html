@@ -42,6 +42,7 @@
             transition: width 0.5s ease-in-out;
             white-space: nowrap;
             overflow: hidden;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.6);
         }
     </style>
 </head>
@@ -367,7 +368,9 @@
                     // Progress Bar Segment
                     const percentage = (count / originalData.length) * 100;
                     progressBarContainer.innerHTML += `
-                        <div class="progress-bar-segment" style="width: ${percentage}%; background-color: ${color};" title="${status}: ${count} (${percentage.toFixed(1)}%)"></div>
+                        <div class="progress-bar-segment flex items-center justify-center text-xs font-semibold text-white" style="width: ${percentage}%; background-color: ${color};" title="${status}: ${count} (${percentage.toFixed(1)}%)">
+                           ${percentage > 5 ? count : ''}
+                        </div>
                     `;
                     
                     // Legend Item
@@ -447,3 +450,5 @@
     </script>
 </body>
 </html>
+
+
