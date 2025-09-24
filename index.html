@@ -171,7 +171,6 @@
         let currentlyDisplayedData = [];
 
         function setupEventListeners() {
-            // ... (rest of the event listeners are the same)
             document.getElementById('search-box').addEventListener('input', applyFilters);
             document.getElementById('filter-status').addEventListener('change', applyFilters);
             document.getElementById('filter-listing-type').addEventListener('change', applyFilters);
@@ -190,11 +189,11 @@
         function handleSingleStatusChange(event) {
             if (event.target.classList.contains('status-select-in-table')) {
                 const select = event.target;
-                const rowIndex = select.dataset.originalIndex;
+                const rowIndex = select.dataset.originalIndex; // This will now get the correct, permanent index
                 
-                if (rowIndex === undefined || rowIndex === null || rowIndex === "-1") {
+                if (rowIndex === undefined || rowIndex === null) {
                     alert("An error occurred: The row could not be identified. Please try reloading the page.");
-                    location.reload(); 
+                    console.error("handleSingleStatusChange failed: rowIndex is undefined.", event.target);
                     return;
                 }
                 const newStatus = select.value;
@@ -220,7 +219,12 @@
                          return;
                     }
                     tableHeaders = result.data.shift();
-                    originalData = result.data;
+                    // THE FIX: Augment each data row with its original 0-based index upon load.
+                    // This is more reliable than using indexOf() later.
+                    originalData = result.data.map((row, index) => {
+                        row.originalIndex = index;
+                        return row;
+                    });
                     populateFilters(originalData);
                     applyFilters();
                     document.getElementById('loader').style.display = 'none';
@@ -232,8 +236,7 @@
         }
         
         function populateFilters(data) {
-            // ... (this function is the same)
-             const listingTypeSet = new Set(data.map(row => row[COL_MAP.LISTING_TYPE]).filter(Boolean));
+            const listingTypeSet = new Set(data.map(row => row[COL_MAP.LISTING_TYPE]).filter(Boolean));
             const populateSelect = (selectId, optionsSet) => {
                 const select = document.getElementById(selectId);
                 select.innerHTML = `<option value="">${selectId.includes('status') ? 'Status (all)' : 'Listing Type (all)'}</option>`;
@@ -262,7 +265,6 @@
         }
         
         function resetFilters() {
-            // ... (this function is the same)
             document.getElementById('search-box').value = '';
             document.getElementById('filter-status').value = '';
             document.getElementById('filter-listing-type').value = '';
@@ -285,9 +287,9 @@
             }
             
             tableBody.innerHTML = data.map(row => {
-                const originalIndex = originalData.indexOf(row);
+                // THE FIX: Read the permanent originalIndex property from the row object.
+                const originalIndex = row.originalIndex;
                 
-                // Build the row's cells based on the DISPLAY_ORDER
                 const orderedCells = DISPLAY_ORDER.map(index => {
                     const content = row[index] ?? '';
                     if (index === COL_MAP.STATUS) {
@@ -311,7 +313,6 @@
         }
 
         function updateDashboardStats(data) {
-            // ... (this function is the same)
             document.getElementById('stat-total').innerText = data.length;
             document.getElementById('stat-tocontact').innerText = data.filter(r => r[COL_MAP.STATUS] === 'To Contact').length;
             document.getElementById('stat-wassent').innerText = data.filter(r => r[COL_MAP.STATUS] === 'Whatsapp Sent').length;
@@ -323,7 +324,6 @@
         }
         
         async function applyBulkAction() {
-            // ... (this function is the same)
             const newStatus = document.getElementById('bulk-action-status').value;
             if (!newStatus) { alert('Please select a status to apply.'); return; }
             const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
@@ -333,13 +333,11 @@
         }
         
         function clearSelection() {
-            // ... (this function is the same)
             document.querySelectorAll('.row-checkbox:checked').forEach(cb => cb.checked = false);
             document.getElementById('select-all-checkbox').checked = false;
         }
 
         function openModal() {
-            // ... (this function is the same)
             const modal = document.getElementById('add-recruit-modal');
             modal.classList.remove('hidden');
             setTimeout(() => {
@@ -349,7 +347,6 @@
         }
 
         function closeModal() {
-            // ... (this function is the same)
             const modal = document.getElementById('add-recruit-modal');
             modal.classList.remove('fade-in');
             modal.querySelector('.modal-content').classList.remove('scale-in');
@@ -357,7 +354,6 @@
         }
 
         async function handleAddRecruit(e) {
-            // ... (this function is the same)
             e.preventDefault();
             const formData = new FormData(e.target);
             const payload = Object.fromEntries(formData.entries());
@@ -367,7 +363,6 @@
         }
 
         async function callScriptFunction(action, payload = {}) {
-            // ... (this function is the same)
             const loader = document.getElementById('loader');
             const loaderText = document.getElementById('loader-text');
             loaderText.innerText = `Executing: ${action}...`;
