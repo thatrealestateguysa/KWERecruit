@@ -71,10 +71,10 @@
     </div>
 
     <main class="container mx-auto px-4 sm:px-6 lg:px-8 flex-grow flex flex-col min-h-0">
-        <header class="flex-shrink-0 flex flex-wrap justify-between items-center py-4 gap-4">
+        <header class="flex-shrink-0 flex flex-wrap justify-between items-center py-3 gap-3">
             <div>
-                <h1 class="text-xl font-bold text-white">KW Explore — Recruit Machine</h1>
-                <p class="text-sm text-gray-400">Recruit Machine</p>
+                <h1 class="text-lg font-bold text-white">KW Explore — Recruit Machine</h1>
+                <p class="text-xs text-gray-400">Recruit Machine</p>
             </div>
             <div class="flex items-center space-x-2 flex-wrap gap-2">
                 <button id="btn-add-recruit" class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 bg-red-600 text-white hover:bg-red-700 focus:ring-red-500">+ Add Recruit</button>
@@ -88,7 +88,7 @@
         <div class="flex-shrink-0 grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
             <!-- Left Column: Visuals -->
             <div class="lg:col-span-3 bg-gray-800 p-3 rounded-lg">
-                <h3 class="text-base font-semibold mb-2 text-white">Pipeline Overview</h3>
+                <h3 class="text-sm font-semibold mb-2 text-white">Pipeline Overview</h3>
                 <div id="stats-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                     <!-- Stat cards will be dynamically inserted here -->
                 </div>
@@ -106,18 +106,18 @@
             <div class="lg:col-span-2 bg-gray-800 p-3 rounded-lg">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <h3 class="text-base font-semibold mb-2 text-white">Filters</h3>
+                        <h3 class="text-sm font-semibold mb-2 text-white">Filters</h3>
                         <div class="flex flex-col gap-2">
-                            <input type="text" id="search-box" placeholder="Search..." class="bg-gray-900 border border-gray-600 text-white text-sm rounded-md shadow-sm w-full p-1.5 focus:ring-red-500 focus:border-red-500">
-                            <select id="filter-status" class="bg-gray-900 border border-gray-600 text-white text-sm rounded-md shadow-sm w-full p-1.5 focus:ring-red-500 focus:border-red-500"><option value="">Status (all)</option></select>
-                            <select id="filter-listing-type" class="bg-gray-900 border border-gray-600 text-white text-sm rounded-md shadow-sm w-full p-1.5 focus:ring-red-500 focus:border-red-500"><option value="">Listing Type (all)</option></select>
+                            <input type="text" id="search-box" placeholder="Search..." class="bg-gray-900 border border-gray-600 text-white text-xs rounded-md shadow-sm w-full p-1.5 focus:ring-red-500 focus:border-red-500">
+                            <select id="filter-status" class="bg-gray-900 border border-gray-600 text-white text-xs rounded-md shadow-sm w-full p-1.5 focus:ring-red-500 focus:border-red-500"><option value="">Status (all)</option></select>
+                            <select id="filter-listing-type" class="bg-gray-900 border border-gray-600 text-white text-xs rounded-md shadow-sm w-full p-1.5 focus:ring-red-500 focus:border-red-500"><option value="">Listing Type (all)</option></select>
                             <button id="btn-reset-filters" class="w-full px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Reset</button>
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-base font-semibold mb-2 text-white">Bulk Actions</h3>
+                        <h3 class="text-sm font-semibold mb-2 text-white">Bulk Actions</h3>
                         <div class="flex flex-col gap-2">
-                            <select id="bulk-action-status" class="bg-gray-900 border border-gray-600 text-white text-sm rounded-md shadow-sm w-full p-1.5 focus:ring-red-500 focus:border-red-500"></select>
+                            <select id="bulk-action-status" class="bg-gray-900 border border-gray-600 text-white text-xs rounded-md shadow-sm w-full p-1.5 focus:ring-red-500 focus:border-red-500"></select>
                             <button id="btn-apply-bulk" class="w-full px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 bg-green-600 text-white hover:bg-green-700 focus:ring-green-500">Apply to Selected</button>
                             <button id="btn-clear-selection" class="w-full px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Clear Selection</button>
                         </div>
@@ -295,7 +295,7 @@
         function renderTable(data) {
             const tableHead = document.querySelector('thead tr');
             const orderedHeaders = DISPLAY_ORDER.map(i => tableHeaders[i]);
-            tableHead.innerHTML = `<th class="px-2 py-2"><input type="checkbox" id="select-all-checkbox"></th>` + orderedHeaders.map(h => `<th scope="col" class="px-4 py-2">${h}</th>`).join('');
+            tableHead.innerHTML = `<th class="px-2 py-2"><input type="checkbox" id="select-all-checkbox"></th>` + orderedHeaders.map(h => `<th scope="col" class="px-4 py-2 text-xs">${h}</th>`).join('');
             document.getElementById('select-all-checkbox').addEventListener('change', (e) => {
                 document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
             });
@@ -320,9 +320,9 @@
                             return `<td class="px-4 py-1"><select class="status-select-in-table bg-gray-700 border border-gray-600 rounded-md p-1 text-gray-50 text-xs" data-original-index="${originalIndex}">${options}</select></td>`;
                         }
                         if (originalColIndex === COL_MAP.WHATSAPP_LINK && String(content).startsWith('http')) {
-                            return `<td class="px-4 py-1"><a href="${content}" target="_blank" class="text-green-400 hover:underline font-semibold">Open Chat</a></td>`;
+                            return `<td class="px-4 py-1"><a href="${content}" target="_blank" class="text-green-400 hover:underline font-semibold text-xs">Open Chat</a></td>`;
                         }
-                        return `<td class="px-4 py-1 text-sm">${content}</td>`;
+                        return `<td class="px-4 py-1 text-xs">${content}</td>`;
                     }).join('')}
                 </tr>
             `}).join('');
@@ -340,7 +340,7 @@
             statsContainer.innerHTML += `
                 <div class="bg-gray-900 p-2 rounded-lg flex flex-col items-center justify-center text-center col-span-full sm:col-span-1 md:col-span-1">
                     <span class="text-2xl font-bold text-white">${originalData.length}</span>
-                    <span class="text-xs text-gray-400 mt-1">Total Leads</span>
+                    <span class="text-xs text-gray-400">Total Leads</span>
                 </div>
             `;
             
@@ -446,3 +446,5 @@
     </script>
 </body>
 </html>
+
+
