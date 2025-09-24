@@ -17,36 +17,31 @@
             --text-secondary: #D1D5DB; /* gray-300 */
             --red-accent: #DC2626; /* red-600 */
         }
-        /* Modal styles for transitions */
         .modal-overlay {
             position: fixed; top: 0; right: 0; bottom: 0; left: 0;
             background-color: rgba(0,0,0,0.75);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
-            transition: opacity 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 50; transition: opacity 0.3s ease;
         }
         .modal-content {
-            background-color: #1F2937; /* gray-800 */
-            border-radius: 0.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            padding: 1.5rem;
-            width: 100%;
-            max-width: 36rem; /* max-w-lg */
-            transform: scale(0.95);
-            transition: all 0.3s ease;
+            background-color: #1F2937;
+            border-radius: 0.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 1.5rem; width: 100%; max-width: 36rem;
+            transform: scale(0.95); transition: all 0.3s ease;
         }
         .fade-in { opacity: 1; }
         .fade-out { opacity: 0; }
         .scale-in { transform: scale(1); }
         .scale-out { transform: scale(0.95); }
         .status-select-in-table {
-            background-color: #374151; /* gray-700 */
-            border: 1px solid #4B5563; /* gray-600 */
-            border-radius: 0.375rem;
-            padding: 0.25rem 0.5rem;
-            color: #F9FAFB; /* gray-50 */
+            background-color: #374151; border: 1px solid #4B5563;
+            border-radius: 0.375rem; padding: 0.25rem 0.5rem; color: #F9FAFB;
+        }
+        .progress-bar-segment {
+            height: 100%;
+            transition: width 0.5s ease-in-out;
+            white-space: nowrap;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -104,14 +99,21 @@
                 <button class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500" onclick="location.reload()">⟳ Reload</button>
             </div>
         </header>
-
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-            <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center"><span id="stat-total" class="text-3xl font-bold text-white">0</span><span class="text-sm text-gray-400 mt-1">Total</span></div>
-            <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center"><span id="stat-tocontact" class="text-3xl font-bold text-white">0</span><span class="text-sm text-gray-400 mt-1">To Contact</span></div>
-            <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center"><span id="stat-wassent" class="text-3xl font-bold text-white">0</span><span class="text-sm text-gray-400 mt-1">WhatsApp Sent</span></div>
-            <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center"><span id="stat-appointments" class="text-3xl font-bold text-white">0</span><span class="text-sm text-gray-400 mt-1">Appointments</span></div>
-            <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center"><span id="stat-ready" class="text-3xl font-bold text-white">0</span><span class="text-sm text-gray-400 mt-1">Ready to Join</span></div>
-            <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center"><span id="stat-contacted7d" class="text-3xl font-bold text-white">0</span><span class="text-sm text-gray-400 mt-1">Contacted (7d)</span></div>
+        
+        <!-- Dynamic Stats Section -->
+        <div class="mb-6 bg-bg-secondary p-4 rounded-lg">
+            <h3 class="text-lg font-semibold mb-4 text-white">Pipeline Overview</h3>
+            <div id="stats-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-8 gap-4">
+                <!-- Stat cards will be dynamically inserted here -->
+            </div>
+            <div class="mt-4">
+                <div id="progress-bar-container" class="w-full bg-gray-700 rounded-full h-6 flex overflow-hidden mb-2">
+                    <!-- Progress bar segments will be dynamically inserted here -->
+                </div>
+                <div id="progress-bar-legend" class="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-400">
+                    <!-- Legend items will be dynamically inserted here -->
+                </div>
+            </div>
         </div>
         
         <div class="bg-bg-secondary p-4 rounded-lg mb-6 flex flex-wrap gap-4 items-center justify-between">
@@ -195,10 +197,11 @@
                 const newStatus = select.value;
                 const result = await callScriptFunction('updateSingleStatus', { rowIndex, newStatus });
                 if (result.success) {
-                    // --- NEW LOGIC: Update local data and re-apply filters ---
-                    const dataRow = originalData[rowIndex];
-                    dataRow[COL_MAP.STATUS] = newStatus;
-                    dataRow[COL_MAP.LAST_CONTACT] = new Date().toISOString(); // Approximate date
+                    const dataRow = originalData.find(row => row.originalIndex == rowIndex);
+                    if(dataRow) {
+                        dataRow[COL_MAP.STATUS] = newStatus;
+                        dataRow[COL_MAP.LAST_CONTACT] = new Date().toISOString();
+                    }
                     applyFilters(); 
                 }
             }
@@ -214,11 +217,12 @@
             const result = await callScriptFunction('bulkUpdateStatus', { rowIndices, newStatus });
 
             if (result.success) {
-                // --- NEW LOGIC: Update local data and re-apply filters ---
                 rowIndices.forEach(index => {
-                    const dataRow = originalData[index];
-                    dataRow[COL_MAP.STATUS] = newStatus;
-                    dataRow[COL_MAP.LAST_CONTACT] = new Date().toISOString();
+                     const dataRow = originalData.find(row => row.originalIndex == index);
+                     if(dataRow) {
+                        dataRow[COL_MAP.STATUS] = newStatus;
+                        dataRow[COL_MAP.LAST_CONTACT] = new Date().toISOString();
+                     }
                 });
                 applyFilters();
                 clearSelection();
@@ -283,7 +287,7 @@
                        (!listingTypeFilter || row[COL_MAP.LISTING_TYPE] === listingTypeFilter);
             });
             renderTable(filteredData);
-            updateDashboardStats(filteredData);
+            updateDashboardStats(); // Update stats based on the whole dataset
         }
         
         function resetFilters() {
@@ -329,15 +333,52 @@
             `}).join('');
         }
 
-        function updateDashboardStats(data) {
-            document.getElementById('stat-total').innerText = data.length;
-            document.getElementById('stat-tocontact').innerText = data.filter(r => r[COL_MAP.STATUS] === 'To Contact').length;
-            document.getElementById('stat-wassent').innerText = data.filter(r => r[COL_MAP.STATUS] === 'Whatsapp Sent').length;
-            document.getElementById('stat-appointments').innerText = data.filter(r => r[COL_MAP.STATUS] === 'Appointment').length;
-            document.getElementById('stat-ready').innerText = data.filter(r => r[COL_MAP.STATUS] === 'Ready to join KW').length;
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            document.getElementById('stat-contacted7d').innerText = data.filter(r => r[COL_MAP.LAST_CONTACT] && new Date(r[COL_MAP.LAST_CONTACT]) >= sevenDaysAgo).length;
+        function updateDashboardStats() {
+            const statsContainer = document.getElementById('stats-container');
+            const progressBarContainer = document.getElementById('progress-bar-container');
+            const legendContainer = document.getElementById('progress-bar-legend');
+            statsContainer.innerHTML = '';
+            progressBarContainer.innerHTML = '';
+            legendContainer.innerHTML = '';
+
+            // Main Total Card
+            statsContainer.innerHTML += `
+                <div class="bg-gray-800 p-4 rounded-lg flex flex-col items-center justify-center text-center col-span-full sm:col-span-1">
+                    <span class="text-3xl font-bold text-white">${originalData.length}</span>
+                    <span class="text-sm text-gray-400 mt-1">Total Leads</span>
+                </div>
+            `;
+            
+            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6'];
+
+            STATUS_OPTIONS.forEach((status, index) => {
+                const count = originalData.filter(r => r[COL_MAP.STATUS] === status).length;
+                if (count > 0) {
+                    const color = colors[index % colors.length];
+                    
+                    // Stat Card
+                    statsContainer.innerHTML += `
+                        <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center">
+                            <span class="text-3xl font-bold text-white">${count}</span>
+                            <span class="text-sm text-gray-400 mt-1">${status}</span>
+                        </div>
+                    `;
+
+                    // Progress Bar Segment
+                    const percentage = (count / originalData.length) * 100;
+                    progressBarContainer.innerHTML += `
+                        <div class="progress-bar-segment" style="width: ${percentage}%; background-color: ${color};" title="${status}: ${count} (${percentage.toFixed(1)}%)"></div>
+                    `;
+                    
+                    // Legend Item
+                    legendContainer.innerHTML += `
+                        <div class="flex items-center">
+                            <span class="inline-block w-3 h-3 rounded-full mr-1.5" style="background-color: ${color};"></span>
+                            <span>${status} (${count})</span>
+                        </div>
+                    `;
+                }
+            });
         }
 
         function clearSelection() {
@@ -378,18 +419,14 @@
                 loader.style.display = 'flex';
                 try {
                     const response = await fetch(WEB_APP_URL, {
-                        method: 'POST',
-                        mode: 'cors',
-                        cache: 'no-cache',
+                        method: 'POST', mode: 'cors', cache: 'no-cache',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify({ action, payload })
                     });
                     const result = await response.json();
                     if (result.result === 'success') {
                         resolve({ success: true, message: result.message });
-                    } else {
-                        throw new Error(result.message);
-                    }
+                    } else { throw new Error(result.message); }
                 } catch (error) {
                     alert(`An error occurred: ${error.message}`);
                     console.error(`Error calling ${action}:`, error);
@@ -410,5 +447,3 @@
     </script>
 </body>
 </html>
-
-
