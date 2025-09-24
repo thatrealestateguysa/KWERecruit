@@ -1,22 +1,13 @@
-<!DOCTYPE html>
+L<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KW Explore — Recruit Machine</title>
-    <script src="https://cdn-tailwindcss.vercel.app/"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .dark {
-            --bg-primary: #111827; /* gray-900 */
-            --bg-secondary: #1F2937; /* gray-800 */
-            --bg-tertiary: #374151; /* gray-700 */
-            --border-color: #4B5563; /* gray-600 */
-            --text-primary: #F9FAFB; /* gray-50 */
-            --text-secondary: #D1D5DB; /* gray-300 */
-            --red-accent: #DC2626; /* red-600 */
-        }
         .modal-overlay {
             position: fixed; top: 0; right: 0; bottom: 0; left: 0;
             background-color: rgba(0,0,0,0.75);
@@ -24,19 +15,12 @@
             z-index: 50; transition: opacity 0.3s ease;
         }
         .modal-content {
-            background-color: #1F2937;
-            border-radius: 0.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            padding: 1.5rem; width: 100%; max-width: 36rem;
             transform: scale(0.95); transition: all 0.3s ease;
         }
         .fade-in { opacity: 1; }
         .fade-out { opacity: 0; }
         .scale-in { transform: scale(1); }
         .scale-out { transform: scale(0.95); }
-        .status-select-in-table {
-            background-color: #374151; border: 1px solid #4B5563;
-            border-radius: 0.375rem; padding: 0.25rem 0.5rem; color: #F9FAFB;
-        }
         .progress-bar-segment {
             height: 100%;
             transition: width 0.5s ease-in-out;
@@ -46,7 +30,7 @@
         }
     </style>
 </head>
-<body class="bg-bg-primary text-text-primary">
+<body class="bg-gray-900 text-gray-50">
 
     <div id="loader" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50">
         <div class="text-center">
@@ -56,7 +40,7 @@
     </div>
     
     <div id="add-recruit-modal" class="modal-overlay hidden opacity-0">
-        <div class="modal-content scale-out">
+        <div class="modal-content bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg scale-out">
             <h2 class="text-xl font-bold mb-4 text-white">Add New Recruit</h2>
             <form id="add-recruit-form">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -79,7 +63,7 @@
                     </select>
                 </div>
                 <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" id="btn-cancel-add" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500">Cancel</button>
+                    <button type="button" id="btn-cancel-add" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Cancel</button>
                     <button type="submit" id="btn-submit-add" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 text-white hover:bg-red-700 focus:ring-red-500">Add Recruit</button>
                 </div>
             </form>
@@ -94,15 +78,15 @@
             </div>
             <div class="flex items-center space-x-2 flex-wrap gap-2">
                 <button id="btn-add-recruit" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 text-white hover:bg-red-700 focus:ring-red-500">+ Add Recruit</button>
-                <button id="btn-fix-dropdowns" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500">Fix Dropdowns</button>
-                <button id="btn-prepare" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500">Prepare Sheet</button>
-                <button id="btn-rerun" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500">Re-run Automations</button>
-                <button class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500" onclick="location.reload()">⟳ Reload</button>
+                <button id="btn-fix-dropdowns" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Fix Dropdowns</button>
+                <button id="btn-prepare" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Prepare Sheet</button>
+                <button id="btn-rerun" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Re-run Automations</button>
+                <button class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500" onclick="location.reload()">⟳ Reload</button>
             </div>
         </header>
         
         <!-- Dynamic Stats Section -->
-        <div class="mb-6 bg-bg-secondary p-4 rounded-lg">
+        <div class="mb-6 bg-gray-800 p-4 rounded-lg">
             <h3 class="text-lg font-semibold mb-4 text-white">Pipeline Overview</h3>
             <div id="stats-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-8 gap-4">
                 <!-- Stat cards will be dynamically inserted here -->
@@ -117,25 +101,25 @@
             </div>
         </div>
         
-        <div class="bg-bg-secondary p-4 rounded-lg mb-6 flex flex-wrap gap-4 items-center justify-between">
+        <div class="bg-gray-800 p-4 rounded-lg mb-6 flex flex-wrap gap-4 items-center justify-between">
              <div class="flex flex-wrap gap-4 items-center flex-grow">
                 <input type="text" id="search-box" placeholder="Search name, suburb, agency..." class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500 flex-grow min-w-[200px]">
                 <select id="filter-status" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500 w-auto"><option value="">Status (all)</option></select>
                 <select id="filter-listing-type" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500 w-auto"><option value="">Listing Type (all)</option></select>
-                <button id="btn-reset-filters" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500">Reset</button>
+                <button id="btn-reset-filters" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Reset</button>
             </div>
              <div class="flex flex-wrap gap-2 items-center">
                 <select id="bulk-action-status" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500 w-auto"></select>
                 <button id="btn-apply-bulk" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-green-600 text-white hover:bg-green-700 focus:ring-green-500">Apply to Selected</button>
-                <button id="btn-clear-selection" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500">Clear</button>
+                <button id="btn-clear-selection" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Clear</button>
             </div>
         </div>
 
-        <div class="bg-bg-secondary rounded-lg overflow-hidden">
+        <div class="bg-gray-800 rounded-lg overflow-hidden">
              <div class="overflow-x-auto">
                  <div class="max-h-[50vh] overflow-y-auto">
-                    <table class="w-full text-sm text-left text-text-secondary">
-                        <thead class="text-xs uppercase bg-bg-tertiary text-text-secondary sticky top-0 z-10">
+                    <table class="w-full text-sm text-left text-gray-300">
+                        <thead class="text-xs uppercase bg-gray-700 text-gray-300 sticky top-0 z-10">
                             <tr></tr>
                         </thead>
                         <tbody id="table-body"></tbody>
@@ -316,14 +300,14 @@
                 const originalIndex = row.originalIndex;
                 const orderedRow = DISPLAY_ORDER.map(i => row[i]);
                 return `
-                <tr class="bg-bg-secondary border-b border-border-color hover:bg-bg-tertiary">
+                <tr class="bg-gray-800 border-b border-gray-600 hover:bg-gray-700">
                     <td class="px-2 py-4"><input type="checkbox" class="row-checkbox" data-original-index="${originalIndex}"></td>
                     ${orderedRow.map((cell, index) => {
                         const originalColIndex = DISPLAY_ORDER[index];
                         const content = cell ?? '';
                         if (originalColIndex === COL_MAP.STATUS) {
                             const options = STATUS_OPTIONS.map(opt => `<option value="${opt}" ${content === opt ? 'selected' : ''}>${opt}</option>`).join('');
-                            return `<td class="px-6 py-4"><select class="status-select-in-table" data-original-index="${originalIndex}">${options}</select></td>`;
+                            return `<td class="px-6 py-4"><select class="status-select-in-table bg-gray-700 border border-gray-600 rounded-md p-1 text-gray-50" data-original-index="${originalIndex}">${options}</select></td>`;
                         }
                         if (originalColIndex === COL_MAP.WHATSAPP_LINK && String(content).startsWith('http')) {
                             return `<td class="px-6 py-4"><a href="${content}" target="_blank" class="text-green-400 hover:underline font-semibold">Open Chat</a></td>`;
@@ -344,7 +328,7 @@
 
             // Main Total Card
             statsContainer.innerHTML += `
-                <div class="bg-gray-800 p-4 rounded-lg flex flex-col items-center justify-center text-center col-span-full sm:col-span-1">
+                <div class="bg-gray-900 p-4 rounded-lg flex flex-col items-center justify-center text-center col-span-full sm:col-span-1">
                     <span class="text-3xl font-bold text-white">${originalData.length}</span>
                     <span class="text-sm text-gray-400 mt-1">Total Leads</span>
                 </div>
@@ -359,7 +343,7 @@
                     
                     // Stat Card
                     statsContainer.innerHTML += `
-                        <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center">
+                        <div class="bg-gray-800 p-4 rounded-lg flex flex-col items-center justify-center text-center">
                             <span class="text-3xl font-bold text-white">${count}</span>
                             <span class="text-sm text-gray-400 mt-1">${status}</span>
                         </div>
@@ -450,5 +434,4 @@
     </script>
 </body>
 </html>
-
 
