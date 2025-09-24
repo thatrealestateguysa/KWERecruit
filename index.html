@@ -152,7 +152,7 @@
             "To Contact", "Whatsapp Sent", "No Whatsapp", "Replied", "Not Interested in KW",
             "Invite to Events/ Networking", "Appointment", "Ready to join KW"
         ];
-        // New: Define the exact order for table columns using their original sheet index
+        // Define the exact order for table columns using their original sheet index
         const DISPLAY_ORDER = [
             COL_MAP.LISTING_TYPE, COL_MAP.LISTING_REF, COL_MAP.NAME, COL_MAP.SURNAME, 
             COL_MAP.WHATSAPP_LINK, COL_MAP.STATUS, // <-- Moved columns
@@ -168,30 +168,22 @@
 
         let originalData = [];
         let tableHeaders = [];
+        let currentlyDisplayedData = [];
 
         function setupEventListeners() {
-            // Filters
+            // ... (rest of the event listeners are the same)
             document.getElementById('search-box').addEventListener('input', applyFilters);
             document.getElementById('filter-status').addEventListener('change', applyFilters);
             document.getElementById('filter-listing-type').addEventListener('change', applyFilters);
             document.getElementById('btn-reset-filters').addEventListener('click', resetFilters);
-            
-            // Top Actions
             document.getElementById('btn-rerun').addEventListener('click', () => callScriptFunction('rerunAutomations'));
             document.getElementById('btn-prepare').addEventListener('click', () => callScriptFunction('prepareSheet'));
             document.getElementById('btn-fix-dropdowns').addEventListener('click', () => callScriptFunction('fixDataValidation'));
-
-
-            // Bulk Actions
             document.getElementById('btn-apply-bulk').addEventListener('click', applyBulkAction);
             document.getElementById('btn-clear-selection').addEventListener('click', clearSelection);
-
-            // Modal
             document.getElementById('btn-add-recruit').addEventListener('click', openModal);
             document.getElementById('btn-cancel-add').addEventListener('click', closeModal);
             document.getElementById('add-recruit-form').addEventListener('submit', handleAddRecruit);
-
-            // Add single change listener to table body
             document.getElementById('table-body').addEventListener('change', handleSingleStatusChange);
         }
         
@@ -199,7 +191,8 @@
             if (event.target.classList.contains('status-select-in-table')) {
                 const select = event.target;
                 const rowIndex = select.dataset.originalIndex;
-                if (!rowIndex || rowIndex === "-1") {
+                
+                if (rowIndex === undefined || rowIndex === null || rowIndex === "-1") {
                     alert("An error occurred: The row could not be identified. Please try reloading the page.");
                     location.reload(); 
                     return;
@@ -239,17 +232,15 @@
         }
         
         function populateFilters(data) {
-            const listingTypeSet = new Set(data.map(row => row[COL_MAP.LISTING_TYPE]).filter(Boolean));
-
+            // ... (this function is the same)
+             const listingTypeSet = new Set(data.map(row => row[COL_MAP.LISTING_TYPE]).filter(Boolean));
             const populateSelect = (selectId, optionsSet) => {
                 const select = document.getElementById(selectId);
                 select.innerHTML = `<option value="">${selectId.includes('status') ? 'Status (all)' : 'Listing Type (all)'}</option>`;
                 optionsSet.forEach(opt => select.innerHTML += `<option value="${opt}">${opt}</option>`);
             };
-            
             populateSelect('filter-status', new Set(STATUS_OPTIONS));
             populateSelect('filter-listing-type', listingTypeSet);
-
             const bulkStatusSelect = document.getElementById('bulk-action-status');
             bulkStatusSelect.innerHTML = `<option value="">Set Status to...</option>`;
             STATUS_OPTIONS.forEach(opt => bulkStatusSelect.innerHTML += `<option value="${opt}">${opt}</option>`);
@@ -260,17 +251,18 @@
             const statusFilter = document.getElementById('filter-status').value;
             const listingTypeFilter = document.getElementById('filter-listing-type').value;
 
-            const filteredData = originalData.filter(row => {
+            currentlyDisplayedData = originalData.filter(row => {
                 const searchString = [row[COL_MAP.NAME], row[COL_MAP.SURNAME], row[COL_MAP.SUBURB], row[COL_MAP.AGENCY]].join(' ').toLowerCase();
                 return searchString.includes(searchTerm) && 
                        (!statusFilter || row[COL_MAP.STATUS] === statusFilter) &&
                        (!listingTypeFilter || row[COL_MAP.LISTING_TYPE] === listingTypeFilter);
             });
-            renderTable(filteredData);
-            updateDashboardStats(filteredData);
+            renderTable(currentlyDisplayedData);
+            updateDashboardStats(currentlyDisplayedData);
         }
         
         function resetFilters() {
+            // ... (this function is the same)
             document.getElementById('search-box').value = '';
             document.getElementById('filter-status').value = '';
             document.getElementById('filter-listing-type').value = '';
@@ -298,14 +290,12 @@
                 // Build the row's cells based on the DISPLAY_ORDER
                 const orderedCells = DISPLAY_ORDER.map(index => {
                     const content = row[index] ?? '';
-                    // Special rendering for status column
                     if (index === COL_MAP.STATUS) {
                         const options = STATUS_OPTIONS.map(opt => 
                             `<option value="${opt}" ${content === opt ? 'selected' : ''}>${opt}</option>`
                         ).join('');
                         return `<td class="px-6 py-4"><select class="status-select-in-table" data-original-index="${originalIndex}">${options}</select></td>`;
                     }
-                    // Special rendering for WhatsApp link
                     if (index === COL_MAP.WHATSAPP_LINK && String(content).startsWith('http')) {
                         return `<td class="px-6 py-4"><a href="${content}" target="_blank" class="text-green-400 hover:underline font-semibold">Open Chat</a></td>`;
                     }
@@ -321,6 +311,7 @@
         }
 
         function updateDashboardStats(data) {
+            // ... (this function is the same)
             document.getElementById('stat-total').innerText = data.length;
             document.getElementById('stat-tocontact').innerText = data.filter(r => r[COL_MAP.STATUS] === 'To Contact').length;
             document.getElementById('stat-wassent').innerText = data.filter(r => r[COL_MAP.STATUS] === 'Whatsapp Sent').length;
@@ -332,26 +323,23 @@
         }
         
         async function applyBulkAction() {
+            // ... (this function is the same)
             const newStatus = document.getElementById('bulk-action-status').value;
-            if (!newStatus) {
-                alert('Please select a status to apply.');
-                return;
-            }
+            if (!newStatus) { alert('Please select a status to apply.'); return; }
             const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
-            if (selectedCheckboxes.length === 0) {
-                alert('Please select at least one row to update.');
-                return;
-            }
+            if (selectedCheckboxes.length === 0) { alert('Please select at least one row to update.'); return; }
             const rowIndices = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.originalIndex));
             await callScriptFunction('bulkUpdateStatus', { rowIndices, newStatus });
         }
         
         function clearSelection() {
+            // ... (this function is the same)
             document.querySelectorAll('.row-checkbox:checked').forEach(cb => cb.checked = false);
             document.getElementById('select-all-checkbox').checked = false;
         }
 
         function openModal() {
+            // ... (this function is the same)
             const modal = document.getElementById('add-recruit-modal');
             modal.classList.remove('hidden');
             setTimeout(() => {
@@ -361,6 +349,7 @@
         }
 
         function closeModal() {
+            // ... (this function is the same)
             const modal = document.getElementById('add-recruit-modal');
             modal.classList.remove('fade-in');
             modal.querySelector('.modal-content').classList.remove('scale-in');
@@ -368,6 +357,7 @@
         }
 
         async function handleAddRecruit(e) {
+            // ... (this function is the same)
             e.preventDefault();
             const formData = new FormData(e.target);
             const payload = Object.fromEntries(formData.entries());
@@ -377,15 +367,15 @@
         }
 
         async function callScriptFunction(action, payload = {}) {
+            // ... (this function is the same)
             const loader = document.getElementById('loader');
             const loaderText = document.getElementById('loader-text');
             loaderText.innerText = `Executing: ${action}...`;
             loader.style.display = 'flex';
-
             try {
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST', mode: 'cors', cache: 'no-cache',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Use text/plain for Apps Script POST
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action, payload })
                 });
                 const result = await response.json();
