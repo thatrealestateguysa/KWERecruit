@@ -144,13 +144,22 @@
     <script>
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyESYVnpFIUaxf8j8eaV8ytn03ew0TsY_BPm-6O90lMnFTmSb-QxlEqjpSEiZ-7JDHatw/exec';
         const COL_MAP = {
-            LISTING_TYPE: 0, NAME: 2, SURNAME: 3, SUBURB: 6, AGENCY: 7, STATUS: 8, 
-            LAST_CONTACT: 9, WHATSAPP_LINK: 11
+            LISTING_TYPE: 0, LISTING_REF: 1, NAME: 2, SURNAME: 3, CONTACT_NUMBER: 4, EMAIL: 5, 
+            SUBURB: 6, AGENCY: 7, STATUS: 8, LAST_CONTACT: 9, NOTES: 10, WHATSAPP_LINK: 11, 
+            WHATSAPP_MESSAGE: 12, CONTACT_ID: 13
         };
         const STATUS_OPTIONS = [
             "To Contact", "Whatsapp Sent", "No Whatsapp", "Replied", "Not Interested in KW",
             "Invite to Events/ Networking", "Appointment", "Ready to join KW"
         ];
+        // New: Define the exact order for table columns using their original sheet index
+        const DISPLAY_ORDER = [
+            COL_MAP.LISTING_TYPE, COL_MAP.LISTING_REF, COL_MAP.NAME, COL_MAP.SURNAME, 
+            COL_MAP.WHATSAPP_LINK, COL_MAP.STATUS, // <-- Moved columns
+            COL_MAP.CONTACT_NUMBER, COL_MAP.EMAIL, COL_MAP.SUBURB, COL_MAP.AGENCY, 
+            COL_MAP.LAST_CONTACT, COL_MAP.NOTES, COL_MAP.WHATSAPP_MESSAGE, COL_MAP.CONTACT_ID
+        ];
+
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchData();
@@ -190,6 +199,11 @@
             if (event.target.classList.contains('status-select-in-table')) {
                 const select = event.target;
                 const rowIndex = select.dataset.originalIndex;
+                if (!rowIndex || rowIndex === "-1") {
+                    alert("An error occurred: The row could not be identified. Please try reloading the page.");
+                    location.reload(); 
+                    return;
+                }
                 const newStatus = select.value;
                 callScriptFunction('updateSingleStatus', { rowIndex, newStatus });
             }
@@ -265,7 +279,9 @@
 
         function renderTable(data) {
             const tableHead = document.querySelector('thead tr');
-            tableHead.innerHTML = `<th class="px-2 py-3"><input type="checkbox" id="select-all-checkbox"></th>` + tableHeaders.map(h => `<th scope="col" class="px-6 py-3">${h}</th>`).join('');
+            const orderedHeaders = DISPLAY_ORDER.map(index => tableHeaders[index] || '');
+            tableHead.innerHTML = `<th class="px-2 py-3"><input type="checkbox" id="select-all-checkbox"></th>` + orderedHeaders.map(h => `<th scope="col" class="px-6 py-3">${h}</th>`).join('');
+            
             document.getElementById('select-all-checkbox').addEventListener('change', (e) => {
                 document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
             });
@@ -278,23 +294,28 @@
             
             tableBody.innerHTML = data.map(row => {
                 const originalIndex = originalData.indexOf(row);
+                
+                // Build the row's cells based on the DISPLAY_ORDER
+                const orderedCells = DISPLAY_ORDER.map(index => {
+                    const content = row[index] ?? '';
+                    // Special rendering for status column
+                    if (index === COL_MAP.STATUS) {
+                        const options = STATUS_OPTIONS.map(opt => 
+                            `<option value="${opt}" ${content === opt ? 'selected' : ''}>${opt}</option>`
+                        ).join('');
+                        return `<td class="px-6 py-4"><select class="status-select-in-table" data-original-index="${originalIndex}">${options}</select></td>`;
+                    }
+                    // Special rendering for WhatsApp link
+                    if (index === COL_MAP.WHATSAPP_LINK && String(content).startsWith('http')) {
+                        return `<td class="px-6 py-4"><a href="${content}" target="_blank" class="text-green-400 hover:underline font-semibold">Open Chat</a></td>`;
+                    }
+                    return `<td class="px-6 py-4">${content}</td>`;
+                }).join('');
+
                 return `
                 <tr class="bg-bg-secondary border-b border-border-color hover:bg-bg-tertiary">
                     <td class="px-2 py-4"><input type="checkbox" class="row-checkbox" data-original-index="${originalIndex}"></td>
-                    ${row.map((cell, index) => {
-                        const content = cell ?? '';
-                        // Render status column as a dropdown
-                        if (index === COL_MAP.STATUS) {
-                            const options = STATUS_OPTIONS.map(opt => 
-                                `<option value="${opt}" ${content === opt ? 'selected' : ''}>${opt}</option>`
-                            ).join('');
-                            return `<td class="px-6 py-4"><select class="status-select-in-table" data-original-index="${originalIndex}">${options}</select></td>`;
-                        }
-                        if (index === COL_MAP.WHATSAPP_LINK && String(content).startsWith('http')) {
-                            return `<td class="px-6 py-4"><a href="${content}" target="_blank" class="text-green-400 hover:underline font-semibold">Open Chat</a></td>`;
-                        }
-                        return `<td class="px-6 py-4">${content}</td>`;
-                    }).join('')}
+                    ${orderedCells}
                 </tr>
             `}).join('');
         }
@@ -369,11 +390,10 @@
                 });
                 const result = await response.json();
                 if (result.result === 'success') {
-                    // Don't show alert for single status update for smoother UX
                     if (action !== 'updateSingleStatus') {
                          alert(`Success: ${result.message}`);
                     }
-                    fetchData(); // Refresh data from sheet
+                    fetchData();
                 } else {
                     throw new Error(result.message);
                 }
