@@ -347,7 +347,7 @@
             const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6'];
 
             STATUS_OPTIONS.forEach((status, index) => {
-                const count = originalData.filter(r => r[COL_MAP.STATUS] && String(r[COL_MAP.STATUS]).trim() === status).length;
+                const count = originalData.filter(r => r[COL_MAP.STATUS] && String(r[COL_MAP.STATUS]).trim().toLowerCase() === status.toLowerCase()).length;
                 if (count > 0) {
                     const color = colors[index % colors.length];
                     
