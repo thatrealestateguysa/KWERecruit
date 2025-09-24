@@ -17,57 +17,73 @@
             --text-secondary: #D1D5DB; /* gray-300 */
             --red-accent: #DC2626; /* red-600 */
         }
-        .btn { @apply px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed; }
-        .btn-red { @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500; }
-        .btn-gray { @apply bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500; }
-        .btn-green { @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500; }
-        .stat-card { @apply bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center; }
-        .stat-value { @apply text-3xl font-bold text-white; }
-        .stat-label { @apply text-sm text-gray-400 mt-1; }
-        .form-input, .form-select { @apply bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500; }
-        .table-header { @apply sticky top-0 bg-gray-800 z-10; }
-        .modal-overlay { @apply fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300; }
-        .modal-content { @apply bg-bg-secondary rounded-lg shadow-xl p-6 w-full max-w-lg transform transition-all duration-300; }
+        /* Modal styles for transitions */
+        .modal-overlay {
+            position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+            background-color: rgba(0,0,0,0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            background-color: #1F2937; /* gray-800 */
+            border-radius: 0.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 36rem; /* max-w-lg */
+            transform: scale(0.95);
+            transition: all 0.3s ease;
+        }
         .fade-in { opacity: 1; }
         .fade-out { opacity: 0; }
         .scale-in { transform: scale(1); }
         .scale-out { transform: scale(0.95); }
+        .status-select-in-table {
+            background-color: #374151; /* gray-700 */
+            border: 1px solid #4B5563; /* gray-600 */
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            color: #F9FAFB; /* gray-50 */
+        }
     </style>
 </head>
 <body class="bg-bg-primary text-text-primary">
 
     <div id="loader" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50">
         <div class="text-center">
-            <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0-0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
             <p id="loader-text" class="mt-2 text-lg">Loading Recruit Machine...</p>
         </div>
     </div>
     
     <div id="add-recruit-modal" class="modal-overlay hidden opacity-0">
         <div class="modal-content scale-out">
-            <hh2 class="text-xl font-bold mb-4">Add New Recruit</h2>
+            <h2 class="text-xl font-bold mb-4 text-white">Add New Recruit</h2>
             <form id="add-recruit-form">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" name="name" placeholder="Name" class="form-input" required>
-                    <input type="text" name="surname" placeholder="Surname" class="form-input">
-                    <input type="tel" name="phone" placeholder="Contact Number" class="form-input" required>
-                    <input type="email" name="email" placeholder="Email" class="form-input">
-                    <input type="text" name="suburb" placeholder="Suburb" class="form-input">
-                    <input type="text" name="agency" placeholder="Agency" class="form-input">
-                    <select name="listingType" class="form-select">
+                    <input type="text" name="name" placeholder="Name" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500" required>
+                    <input type="text" name="surname" placeholder="Surname" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
+                    <input type="tel" name="phone" placeholder="Contact Number" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500" required>
+                    <input type="email" name="email" placeholder="Email" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
+                    <input type="text" name="suburb" placeholder="Suburb" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
+                    <input type="text" name="agency" placeholder="Agency" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
+                    <select name="listingType" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
                         <option>On Show</option>
                         <option>New Listing</option>
                         <option selected>Other</option>
                     </select>
-                     <select name="status" class="form-select">
+                     <select name="status" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
                         <option selected>To Contact</option>
                         <option>Whatsapp Sent</option>
                         <option>No Whatsapp</option>
                     </select>
                 </div>
                 <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" id="btn-cancel-add" class="btn btn-gray">Cancel</button>
-                    <button type="submit" id="btn-submit-add" class="btn btn-red">Add Recruit</button>
+                    <button type="button" id="btn-cancel-add" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500">Cancel</button>
+                    <button type="submit" id="btn-submit-add" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 text-white hover:bg-red-700 focus:ring-red-500">Add Recruit</button>
                 </div>
             </form>
         </div>
@@ -77,37 +93,37 @@
         <header class="flex flex-wrap justify-between items-center mb-6 gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-white">KW Explore — Recruit Machine</h1>
-                <p class="text-gray-400">Interactive Dashboard - Dark theme</p>
+                <p class="text-gray-400">Recruit Machine</p>
             </div>
             <div class="flex items-center space-x-2 flex-wrap gap-2">
-                <button id="btn-add-recruit" class="btn btn-red">+ Add Recruit</button>
-                <button id="btn-fix-dropdowns" class="btn btn-gray">Fix Dropdowns</button>
-                <button id="btn-prepare" class="btn btn-gray">Prepare Sheet</button>
-                <button id="btn-rerun" class="btn btn-gray">Re-run Automations</button>
-                <button class="btn btn-gray" onclick="location.reload()">⟳ Reload</button>
+                <button id="btn-add-recruit" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 text-white hover:bg-red-700 focus:ring-red-500">+ Add Recruit</button>
+                <button id="btn-fix-dropdowns" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500">Fix Dropdowns</button>
+                <button id="btn-prepare" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500">Prepare Sheet</button>
+                <button id="btn-rerun" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500">Re-run Automations</button>
+                <button class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500" onclick="location.reload()">⟳ Reload</button>
             </div>
         </header>
 
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-            <div class="stat-card"><span id="stat-total" class="stat-value">0</span><span class="stat-label">Total</span></div>
-            <div class="stat-card"><span id="stat-tocontact" class="stat-value">0</span><span class="stat-label">To Contact</span></div>
-            <div class="stat-card"><span id="stat-wassent" class="stat-value">0</span><span class="stat-label">WhatsApp Sent</span></div>
-            <div class="stat-card"><span id="stat-appointments" class="stat-value">0</span><span class="stat-label">Appointments</span></div>
-            <div class="stat-card"><span id="stat-ready" class="stat-value">0</span><span class="stat-label">Ready to Join</span></div>
-            <div class="stat-card"><span id="stat-contacted7d" class="stat-value">0</span><span class="stat-label">Contacted (7d)</span></div>
+            <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center"><span id="stat-total" class="text-3xl font-bold text-white">0</span><span class="text-sm text-gray-400 mt-1">Total</span></div>
+            <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center"><span id="stat-tocontact" class="text-3xl font-bold text-white">0</span><span class="text-sm text-gray-400 mt-1">To Contact</span></div>
+            <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center"><span id="stat-wassent" class="text-3xl font-bold text-white">0</span><span class="text-sm text-gray-400 mt-1">WhatsApp Sent</span></div>
+            <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center"><span id="stat-appointments" class="text-3xl font-bold text-white">0</span><span class="text-sm text-gray-400 mt-1">Appointments</span></div>
+            <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center"><span id="stat-ready" class="text-3xl font-bold text-white">0</span><span class="text-sm text-gray-400 mt-1">Ready to Join</span></div>
+            <div class="bg-bg-secondary p-4 rounded-lg flex flex-col items-center justify-center text-center"><span id="stat-contacted7d" class="text-3xl font-bold text-white">0</span><span class="text-sm text-gray-400 mt-1">Contacted (7d)</span></div>
         </div>
         
         <div class="bg-bg-secondary p-4 rounded-lg mb-6 flex flex-wrap gap-4 items-center justify-between">
              <div class="flex flex-wrap gap-4 items-center flex-grow">
-                <input type="text" id="search-box" placeholder="Search name, suburb, agency..." class="form-input flex-grow min-w-[200px]">
-                <select id="filter-status" class="form-select w-auto"><option value="">Status (all)</option></select>
-                <select id="filter-listing-type" class="form-select w-auto"><option value="">Listing Type (all)</option></select>
-                <button id="btn-reset-filters" class="btn btn-gray">Reset</button>
+                <input type="text" id="search-box" placeholder="Search name, suburb, agency..." class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500 flex-grow min-w-[200px]">
+                <select id="filter-status" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500 w-auto"><option value="">Status (all)</option></select>
+                <select id="filter-listing-type" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500 w-auto"><option value="">Listing Type (all)</option></select>
+                <button id="btn-reset-filters" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500">Reset</button>
             </div>
              <div class="flex flex-wrap gap-2 items-center">
-                <select id="bulk-action-status" class="form-select w-auto"></select>
-                <button id="btn-apply-bulk" class="btn btn-green">Apply to Selected</button>
-                <button id="btn-clear-selection" class="btn btn-gray">Clear</button>
+                <select id="bulk-action-status" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500 w-auto"></select>
+                <button id="btn-apply-bulk" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-green-600 text-white hover:bg-green-700 focus:ring-green-500">Apply to Selected</button>
+                <button id="btn-clear-selection" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 text-gray-200 hover:bg-gray-600 focus:ring-gray-500">Clear</button>
             </div>
         </div>
 
@@ -115,7 +131,7 @@
              <div class="overflow-x-auto">
                  <div class="max-h-[50vh] overflow-y-auto">
                     <table class="w-full text-sm text-left text-text-secondary">
-                        <thead class="text-xs uppercase bg-bg-tertiary text-text-secondary table-header">
+                        <thead class="text-xs uppercase bg-bg-tertiary text-text-secondary sticky top-0 z-10">
                             <tr></tr>
                         </thead>
                         <tbody id="table-body"></tbody>
@@ -131,6 +147,10 @@
             LISTING_TYPE: 0, NAME: 2, SURNAME: 3, SUBURB: 6, AGENCY: 7, STATUS: 8, 
             LAST_CONTACT: 9, WHATSAPP_LINK: 11
         };
+        const STATUS_OPTIONS = [
+            "To Contact", "Whatsapp Sent", "No Whatsapp", "Replied", "Not Interested in KW",
+            "Invite to Events/ Networking", "Appointment", "Ready to join KW"
+        ];
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchData();
@@ -161,11 +181,23 @@
             document.getElementById('btn-add-recruit').addEventListener('click', openModal);
             document.getElementById('btn-cancel-add').addEventListener('click', closeModal);
             document.getElementById('add-recruit-form').addEventListener('submit', handleAddRecruit);
+
+            // Add single change listener to table body
+            document.getElementById('table-body').addEventListener('change', handleSingleStatusChange);
+        }
+        
+        function handleSingleStatusChange(event) {
+            if (event.target.classList.contains('status-select-in-table')) {
+                const select = event.target;
+                const rowIndex = select.dataset.originalIndex;
+                const newStatus = select.value;
+                callScriptFunction('updateSingleStatus', { rowIndex, newStatus });
+            }
         }
 
         async function fetchData() {
             const loaderText = document.getElementById('loader-text');
-            if (WEB_APP_URL === 'PASTE_YOUR_DEPLOYED_WEB_APP_URL_HERE') {
+            if (WEB_APP_URL.includes('PASTE_YOUR_DEPLOYED_WEB_APP_URL')) {
                 loaderText.innerText = 'CONFIGURATION ERROR:\nPlease paste your Web App URL into the index.html file.';
                 return;
             }
@@ -193,7 +225,6 @@
         }
         
         function populateFilters(data) {
-            const statusSet = new Set(data.map(row => row[COL_MAP.STATUS]).filter(Boolean));
             const listingTypeSet = new Set(data.map(row => row[COL_MAP.LISTING_TYPE]).filter(Boolean));
 
             const populateSelect = (selectId, optionsSet) => {
@@ -202,12 +233,12 @@
                 optionsSet.forEach(opt => select.innerHTML += `<option value="${opt}">${opt}</option>`);
             };
             
-            populateSelect('filter-status', statusSet);
+            populateSelect('filter-status', new Set(STATUS_OPTIONS));
             populateSelect('filter-listing-type', listingTypeSet);
 
             const bulkStatusSelect = document.getElementById('bulk-action-status');
             bulkStatusSelect.innerHTML = `<option value="">Set Status to...</option>`;
-            statusSet.forEach(opt => bulkStatusSelect.innerHTML += `<option value="${opt}">${opt}</option>`);
+            STATUS_OPTIONS.forEach(opt => bulkStatusSelect.innerHTML += `<option value="${opt}">${opt}</option>`);
         }
 
         function applyFilters() {
@@ -252,6 +283,13 @@
                     <td class="px-2 py-4"><input type="checkbox" class="row-checkbox" data-original-index="${originalIndex}"></td>
                     ${row.map((cell, index) => {
                         const content = cell ?? '';
+                        // Render status column as a dropdown
+                        if (index === COL_MAP.STATUS) {
+                            const options = STATUS_OPTIONS.map(opt => 
+                                `<option value="${opt}" ${content === opt ? 'selected' : ''}>${opt}</option>`
+                            ).join('');
+                            return `<td class="px-6 py-4"><select class="status-select-in-table" data-original-index="${originalIndex}">${options}</select></td>`;
+                        }
                         if (index === COL_MAP.WHATSAPP_LINK && String(content).startsWith('http')) {
                             return `<td class="px-6 py-4"><a href="${content}" target="_blank" class="text-green-400 hover:underline font-semibold">Open Chat</a></td>`;
                         }
@@ -331,7 +369,10 @@
                 });
                 const result = await response.json();
                 if (result.result === 'success') {
-                    alert(`Success: ${result.message}`);
+                    // Don't show alert for single status update for smoother UX
+                    if (action !== 'updateSingleStatus') {
+                         alert(`Success: ${result.message}`);
+                    }
                     fetchData(); // Refresh data from sheet
                 } else {
                     throw new Error(result.message);
@@ -346,3 +387,5 @@
     </script>
 </body>
 </html>
+
+
