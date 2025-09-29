@@ -1,448 +1,430 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KW Explore — Recruit Machine</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .modal-overlay {
-            position: fixed; top: 0; right: 0; bottom: 0; left: 0;
-            background-color: rgba(0,0,0,0.75);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 50; transition: opacity 0.3s ease;
-        }
-        .modal-content {
-            transform: scale(0.95); transition: all 0.3s ease;
-        }
-        .fade-in { opacity: 1; }
-        .fade-out { opacity: 0; }
-        .scale-in { transform: scale(1); }
-        .scale-out { transform: scale(0.95); }
-        .progress-bar-segment {
-            height: 100%;
-            transition: width 0.5s ease-in-out;
-            white-space: nowrap;
-            overflow: hidden;
-            text-shadow: 1px 1px 1px rgba(0,0,0,0.6);
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KWE Recruit Machine Dashboard</title>
+  <style>
+    :root{
+      --bg:#0b0b0f;--panel:#14141a;--muted:#1c1c24;--text:#e7e7ea;--sub:#a7a7ad;
+      --ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--accent:#C70000;--line:#2a2a33;
+      --pill:#0f1117;--pillEdge:#2a2f3a;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;background:var(--bg);color:var(--text);
+      font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans","Helvetica Neue",Arial,sans-serif;
+      overflow:hidden;
+    }
+    a{color:inherit}
+    .wrap{max-width:none;width:100%;margin:0 auto;padding:16px}
+
+    .topbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
+    .brand img.logo{height:34px;width:auto;display:block;filter:drop-shadow(0 1px 0 rgba(0,0,0,.3));}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{background:var(--muted);border:1px solid var(--line);color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+    .btn:hover{background:#20202a}
+    .btn.ghost{background:transparent;border-color:var(--line)}
+    .btn.primary{background:var(--accent);border-color:#a10000}
+    .btn.small{padding:6px 8px;font-size:12px;border-radius:8px}
+    .btn.gray{background:#2b2f3a;border-color:#3a3f4d;color:#e4e6eb}
+
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
+    .card h3{margin:0 0 10px 0;font-size:13px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px}
+
+    .statusbar{display:flex;gap:12px;flex-wrap:nowrap;overflow:auto;padding:6px 4px}
+    .statustab{min-width:160px;background:var(--pill);border:1px solid var(--pillEdge);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+    .statustab .label{font-size:12px;color:#c5c7ce;text-transform:uppercase;letter-spacing:.4px}
+    .statustab .count{font-size:22px;font-weight:800;color:var(--accent);text-shadow:0 0 1px rgba(0,0,0,.4)}
+    .statustab.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:#131720}
+
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .between{justify-content:space-between}
+    .col{flex:1 1 420px}
+
+    .filters{display:flex;gap:8px;flex-wrap:wrap}
+    .input,.select{background:#111117;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;outline:none}
+    .input:focus,.select:focus{border-color:#3a3a46}
+
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    thead th{position:sticky;top:0;background:var(--panel);z-index:1}
+    th,td{border-bottom:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}
+    tbody tr:hover{background:#121219}
+    .tbl{overflow:auto;border:1px solid var(--line);border-radius:12px}
+
+    .note{width:260px;min-height:34px;max-height:100px;resize:vertical}
+    .status-select{min-width:160px}
+
+    .toast{position:fixed;right:16px;bottom:16px;background:#111;color:#fff;border:1px solid #333;border-radius:10px;padding:10px 12px;opacity:.98}
+    .hidden{display:none}
+
+    .muted{color:var(--sub)}
+    .danger{color:var(--err)}
+  </style>
 </head>
-<body class="bg-gray-900 text-gray-50 h-screen flex flex-col">
-
-    <div id="loader" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50">
-        <div class="text-center">
-            <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0-0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            <p id="loader-text" class="mt-2 text-lg">Loading Recruit Machine...</p>
-        </div>
-    </div>
-    
-    <div id="add-recruit-modal" class="modal-overlay hidden opacity-0">
-        <div class="modal-content bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg scale-out">
-            <h2 class="text-xl font-bold mb-4 text-white">Add New Recruit</h2>
-            <form id="add-recruit-form">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" name="name" placeholder="Name" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500" required>
-                    <input type="text" name="surname" placeholder="Surname" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
-                    <input type="tel" name="phone" placeholder="Contact Number" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500" required>
-                    <input type="email" name="email" placeholder="Email" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
-                    <input type="text" name="suburb" placeholder="Suburb" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
-                    <input type="text" name="agency" placeholder="Agency" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
-                    <select name="listingType" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
-                        <option>On Show</option>
-                        <option>New Listing</option>
-                        <option>Rental</option>
-                        <option selected>Other</option>
-                    </select>
-                     <select name="status" class="bg-gray-900 border border-gray-600 text-white rounded-md shadow-sm w-full p-2 focus:ring-red-500 focus:border-red-500">
-                        <option selected>To Contact</option>
-                        <option>Whatsapp Sent</option>
-                        <option>No Whatsapp</option>
-                    </select>
-                </div>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" id="btn-cancel-add" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Cancel</button>
-                    <button type="submit" id="btn-submit-add" class="px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 text-white hover:bg-red-700 focus:ring-red-500">Add Recruit</button>
-                </div>
-            </form>
-        </div>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <img class="logo" src="kw-explore-logo.png" alt="KW Explore" onerror="this.style.display='none'">
+        KWE Recruit Machine
+      </div>
+      <div class="controls">
+        <button class="btn" id="refreshBtn" title="Refresh data">⟳ Refresh</button>
+        <button class="btn" id="prepareBtn" title="Clear WA columns">Prepare</button>
+        <button class="btn" id="rerunBtn" title="Rebuild WhatsApp links/messages">Re-run</button>
+        <button class="btn" id="fixBtn" title="Fix dropdowns">Fix Dropdowns</button>
+        <a class="btn ghost" id="openSheetBtn" target="_blank" rel="noopener">Open Sheet</a>
+      </div>
     </div>
 
-    <main class="container mx-auto px-4 sm:px-6 lg:px-8 flex-grow flex flex-col min-h-0">
-        <header class="flex-shrink-0 flex flex-wrap justify-between items-center py-3 gap-3">
-            <div>
-                <h1 class="text-lg font-bold text-white">KW Explore — Recruit Machine</h1>
-                <p class="text-xs text-gray-400">Recruit Machine</p>
-            </div>
-            <div class="flex items-center space-x-2 flex-wrap gap-2">
-                <button id="btn-add-recruit" class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 bg-red-600 text-white hover:bg-red-700 focus:ring-red-500">+ Add Recruit</button>
-                <button id="btn-fix-dropdowns" class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Fix Dropdowns</button>
-                <button id="btn-prepare" class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Prepare Sheet</button>
-                <button id="btn-rerun" class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Re-run Automations</button>
-                <button class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500" onclick="location.reload()">⟳ Reload</button>
-            </div>
-        </header>
-        
-        <div class="flex-shrink-0 grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
-            <!-- Left Column: Visuals -->
-            <div class="lg:col-span-3 bg-gray-800 p-3 rounded-lg">
-                <h3 class="text-sm font-semibold mb-2 text-white">Pipeline Overview</h3>
-                <div id="stats-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                    <!-- Stat cards will be dynamically inserted here -->
-                </div>
-                <div class="mt-3">
-                    <div id="progress-bar-container" class="w-full bg-gray-700 rounded-full h-5 flex overflow-hidden mb-2">
-                        <!-- Progress bar segments will be dynamically inserted here -->
-                    </div>
-                    <div id="progress-bar-legend" class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-400">
-                        <!-- Legend items will be dynamically inserted here -->
-                    </div>
-                </div>
-            </div>
+    <div class="card" id="pipelineCard">
+      <div class="statusbar" id="statusTabs"></div>
 
-            <!-- Right Column: Filters and Actions -->
-            <div class="lg:col-span-2 bg-gray-800 p-3 rounded-lg">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <h3 class="text-sm font-semibold mb-2 text-white">Filters</h3>
-                        <div class="flex flex-col gap-2">
-                            <input type="text" id="search-box" placeholder="Search..." class="bg-gray-900 border border-gray-600 text-white text-xs rounded-md shadow-sm w-full p-1.5 focus:ring-red-500 focus:border-red-500">
-                            <select id="filter-status" class="bg-gray-900 border border-gray-600 text-white text-xs rounded-md shadow-sm w-full p-1.5 focus:ring-red-500 focus:border-red-500"><option value="">Status (all)</option></select>
-                            <select id="filter-listing-type" class="bg-gray-900 border border-gray-600 text-white text-xs rounded-md shadow-sm w-full p-1.5 focus:ring-red-500 focus:border-red-500"><option value="">Listing Type (all)</option></select>
-                            <button id="btn-reset-filters" class="w-full px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Reset</button>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-semibold mb-2 text-white">Bulk Actions</h3>
-                        <div class="flex flex-col gap-2">
-                            <select id="bulk-action-status" class="bg-gray-900 border border-gray-600 text-white text-xs rounded-md shadow-sm w-full p-1.5 focus:ring-red-500 focus:border-red-500"></select>
-                            <button id="btn-apply-bulk" class="w-full px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 bg-green-600 text-white hover:bg-green-700 focus:ring-green-500">Apply to Selected</button>
-                            <button id="btn-clear-selection" class="w-full px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 bg-gray-600 text-gray-200 hover:bg-gray-500 focus:ring-gray-500">Clear Selection</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <div class="row between" style="margin-top:12px">
+        <div class="col">
+          <h3>Filters</h3>
+          <div class="filters">
+            <!-- NEW: front-end search (only addition) -->
+            <input id="fltSearch" class="input" type="search" placeholder="Search…" style="min-width:240px" />
+
+            <select id="fltAgency" class="select"><option value="">Agency (all)</option></select>
+            <select id="fltStatus" class="select"><option value="">Status (all)</option></select>
+            <button id="resetFilters" class="btn gray">Reset</button>
+          </div>
         </div>
-
-
-        <div class="bg-gray-800 rounded-lg overflow-hidden flex-grow flex flex-col">
-             <div class="overflow-auto h-full">
-                <table class="w-full text-sm text-left text-gray-300">
-                    <thead class="text-xs uppercase bg-gray-700 text-gray-300 sticky top-0 z-10">
-                        <tr></tr>
-                    </thead>
-                    <tbody id="table-body"></tbody>
-                </table>
-             </div>
+        <div class="col">
+          <h3>Bulk Actions</h3>
+          <div class="row">
+            <select id="bulkStatus" class="select status-select"><option value="">Set Status to...</option></select>
+            <button id="applyBulk" class="btn primary">Apply</button>
+            <button id="clearChecks" class="btn gray">Clear</button>
+          </div>
         </div>
-    </main>
+      </div>
 
-    <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyESYVnpFIUaxf8j8eaV8ytn03ew0TsY_BPm-6O90lMnFTmSb-QxlEqjpSEiZ-7JDHatw/exec';
-        const COL_MAP = {
-            LISTING_TYPE: 0, LISTING_REF: 1, NAME: 2, SURNAME: 3, CONTACT_NUMBER: 4, EMAIL: 5, 
-            SUBURB: 6, AGENCY: 7, STATUS: 8, LAST_CONTACT: 9, NOTES: 10, WHATSAPP_LINK: 11, 
-            WHATSAPP_MESSAGE: 12, CONTACT_ID: 13
+      <div class="muted" style="margin-top:10px">
+        Click a status block to filter. Your selection stays active while you update rows.
+        Notes save with the <strong>Save</strong> button per row.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Recruits</h3>
+      <div class="tbl" id="tableWrap">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th style="width:28px"><input type="checkbox" id="checkAll" /></th>
+              <th>Listing Type</th>
+              <th>WhatsApp Link</th>
+              <th>Status</th>
+              <th>Name</th>
+              <th>Surname</th>
+              <th>Contact Number</th>
+              <th>Notes</th>
+              <th>Agency</th>
+              <th>Suburb</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    // === CONFIG ===
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzjX67akOv2uPloX312lsO57-ZvVyMR7Yup74cLS58nbZkoPI7ZwvosZkcV9WhwsWNXuw/exec';
+    const SHEET_URL_HINT = 'https://docs.google.com/spreadsheets/d/1ZahEKgePHz8peSeU0wq8UbzP-aGfmENR1HIfOdpeFHI/edit?gid=0#gid=0';
+    const STATUS_OPTIONS = [
+      'To Contact','Whatsapp Sent','No Whatsapp','Replied',
+      'Not Interested in KW','Invite to Events/ Networking','Appointment',
+      'Ready to join KW','JOINED'
+    ];
+
+    function getStatusOptions(){
+      const base = STATUS_OPTIONS.slice();
+      const extras = Array.from(new Set(rows.map(r=>r.status).filter(s=>s && !base.includes(s))));
+      return base.concat(extras);
+    }
+    function normalizeStatus(s){
+      const x = String(s||'').trim().toLowerCase();
+      const map = {
+        'to contact':'To Contact','whatsapp sent':'Whatsapp Sent','no whatsapp':'No Whatsapp','replied':'Replied',
+        'not interested in kw':'Not Interested in KW','invite to events/ networking':'Invite to Events/ Networking',
+        'appointment':'Appointment','ready to join kw':'Ready to join KW','joined':'JOINED'
+      };
+      return map[x] || s;
+    }
+
+    // === STATE ===
+    let rows = [];
+    let filtered = [];
+    let statusCounts = {};
+    let selectedStatus = localStorage.getItem('fltStatus') || '';
+    let selectedAgency = localStorage.getItem('fltAgency') || '';
+    let searchText = localStorage.getItem('fltSearch') || ''; // NEW
+
+    // === HELPERS ===
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    function toast(msg, ms=2200){ const el = $('#toast'); el.textContent = msg; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), ms); }
+    function makeSelect(opts, value){ const s = document.createElement('select'); s.className='select status-select'; opts.forEach(o=>{ const op=document.createElement('option'); op.value=o; op.textContent=o; if(o===value) op.selected=true; s.appendChild(op);}); return s; }
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+    const debounce = (fn, delay=250) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),delay); }; }; // NEW
+
+    function buildRowObject(arr, idx){
+      return {
+        originalIndex: idx,
+        listingType: arr[0]||'',
+        listingRef: arr[1]||'',
+        name: arr[2]||'',
+        surname: arr[3]||'',
+        phone: arr[4]||'',
+        email: arr[5]||'',
+        suburb: arr[6]||'',
+        agency: arr[7]||'',
+        status: normalizeStatus(arr[8]||''),
+        lastContact: arr[9]||'',
+        notes: arr[10]||'',
+        waLink: arr[11]||'',
+        waMessage: arr[12]||'',
+        contactId: arr[13]||''
+      };
+    }
+
+    async function apiGet(){
+      const res = await fetch(API_URL + '?t=' + Date.now(), { cache:'no-store' });
+      if(!res.ok) throw new Error('GET failed: ' + res.status);
+      return res.json();
+    }
+    // CORS-safe POST for Apps Script (unchanged)
+    async function apiPost(action, payload = {}) {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, payload }),
+        cache: 'no-store',
+        credentials: 'omit'
+      });
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch { throw new Error('Bad response from server: ' + text); }
+      if (data.result !== 'success') throw new Error(data.message || 'Server error');
+      return data;
+    }
+
+    function computeStats(){
+      statusCounts = {};
+      for(const r of rows){ const k = r.status || '—'; statusCounts[k] = (statusCounts[k]||0)+1; }
+    }
+
+    function renderStatusTabs(){
+      computeStats();
+      const bar = $('#statusTabs');
+      bar.innerHTML = '';
+      function makeTab(key,label,count){
+        const b = document.createElement('button');
+        b.className = 'statustab';
+        b.dataset.key = key;
+        b.innerHTML = `<span class="count">${count}</span><span class="label">${escapeHtml(label)}</span>`;
+        b.onclick = ()=>{
+          selectedStatus = key; // '' = All
+          $('#fltStatus').value = selectedStatus;
+          localStorage.setItem('fltStatus', selectedStatus);
+          applyFilters();
+          markActiveStatusTabs();
         };
-        const STATUS_OPTIONS = [
-            "To Contact", "Whatsapp Sent", "No Whatsapp", "Replied", "Not Interested in KW",
-            "Invite to Events/ Networking", "Appointment", "Ready to join KW"
-        ];
-        const DISPLAY_ORDER = [
-            COL_MAP.LISTING_TYPE, COL_MAP.LISTING_REF, COL_MAP.NAME, COL_MAP.SURNAME, 
-            COL_MAP.WHATSAPP_LINK, COL_MAP.STATUS,
-            COL_MAP.CONTACT_NUMBER, COL_MAP.EMAIL, COL_MAP.SUBURB, COL_MAP.AGENCY, 
-            COL_MAP.LAST_CONTACT, COL_MAP.NOTES, COL_MAP.WHATSAPP_MESSAGE, COL_MAP.CONTACT_ID
-        ];
+        return b;
+      }
+      bar.appendChild(makeTab('', 'Total', rows.length));
+      for(const st of STATUS_OPTIONS){ bar.appendChild(makeTab(st, st, statusCounts[st]||0)); }
+      markActiveStatusTabs();
+    }
+    function markActiveStatusTabs(){
+      $$('.statustab').forEach(btn=>{
+        if(btn.dataset.key === (selectedStatus||'')) btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+    }
+    function unique(list){ return Array.from(new Set(list.filter(Boolean))).sort((a,b)=>a.localeCompare(b)); }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchData();
-            setupEventListeners();
-        });
+    function populateFilters(){
+      const stSel = $('#fltStatus');
+      stSel.innerHTML = '<option value="">Status (all)</option>' + getStatusOptions().map(s=>`<option>${s}</option>`).join('');
+      stSel.value = selectedStatus;
 
-        let originalData = [];
-        let tableHeaders = [];
+      const agencies = unique(rows.map(r=>r.agency));
+      const agSel = $('#fltAgency');
+      agSel.innerHTML = '<option value="">Agency (all)</option>' + agencies.map(a=>`<option>${escapeHtml(a)}</option>`).join('');
+      agSel.value = selectedAgency;
 
-        function setupEventListeners() {
-            document.getElementById('search-box').addEventListener('input', applyFilters);
-            document.getElementById('filter-status').addEventListener('change', applyFilters);
-            document.getElementById('filter-listing-type').addEventListener('change', applyFilters);
-            document.getElementById('btn-reset-filters').addEventListener('click', resetFilters);
-            document.getElementById('btn-rerun').addEventListener('click', () => callScriptFunctionAndRefresh('rerunAutomations'));
-            document.getElementById('btn-prepare').addEventListener('click', () => callScriptFunctionAndRefresh('prepareSheet'));
-            document.getElementById('btn-fix-dropdowns').addEventListener('click', () => callScriptFunctionAndRefresh('fixDataValidation'));
-            document.getElementById('btn-add-recruit').addEventListener('click', openModal);
-            document.getElementById('btn-cancel-add').addEventListener('click', closeModal);
-            document.getElementById('add-recruit-form').addEventListener('submit', handleAddRecruit);
-            document.getElementById('btn-apply-bulk').addEventListener('click', applyBulkAction);
-            document.getElementById('btn-clear-selection').addEventListener('click', clearSelection);
-            document.getElementById('table-body').addEventListener('change', handleSingleStatusChange);
-        }
-        
-        async function handleSingleStatusChange(event) {
-            if (event.target.classList.contains('status-select-in-table')) {
-                const select = event.target;
-                const rowIndex = select.dataset.originalIndex; 
-                if (rowIndex === undefined) {
-                    console.error("Row index is undefined. Cannot update status.");
-                    return;
-                }
-                const newStatus = select.value;
-                const result = await callScriptFunction('updateSingleStatus', { rowIndex, newStatus });
-                if (result.success) {
-                    const dataRow = originalData.find(row => row.originalIndex == rowIndex);
-                    if(dataRow) {
-                        dataRow[COL_MAP.STATUS] = newStatus;
-                        dataRow[COL_MAP.LAST_CONTACT] = new Date().toISOString();
-                    }
-                    applyFilters(); 
-                }
-            }
-        }
-        
-        async function applyBulkAction() {
-            const newStatus = document.getElementById('bulk-action-status').value;
-            if (!newStatus) return;
-            const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
-            if (selectedCheckboxes.length === 0) return;
-            const rowIndices = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.originalIndex));
-            
-            const result = await callScriptFunction('bulkUpdateStatus', { rowIndices, newStatus });
+      const bulk = $('#bulkStatus');
+      bulk.innerHTML = '<option value="">Set Status to...</option>' + getStatusOptions().map(s=>`<option>${s}</option>`).join('');
 
-            if (result.success) {
-                rowIndices.forEach(index => {
-                     const dataRow = originalData.find(row => row.originalIndex == index);
-                     if(dataRow) {
-                        dataRow[COL_MAP.STATUS] = newStatus;
-                        dataRow[COL_MAP.LAST_CONTACT] = new Date().toISOString();
-                     }
-                });
-                applyFilters();
-                clearSelection();
-            }
-        }
+      // NEW: restore saved search text into the input
+      const sEl = document.getElementById('fltSearch');
+      if (sEl) sEl.value = searchText;
+    }
 
-        async function fetchData() {
-            const loaderText = document.getElementById('loader-text');
-            if (WEB_APP_URL.includes('PASTE_YOUR_DEPLOYED_WEB_APP_URL')) {
-                loaderText.innerText = 'CONFIGURATION ERROR:\nPlease paste your Web App URL into the index.html file.';
-                return;
-            }
-            try {
-                const response = await fetch(WEB_APP_URL);
-                if (!response.ok) throw new Error(`Network response error: ${response.statusText}`);
-                const result = await response.json();
+    // UPDATED: include search filter (front-end only)
+    function applyFilters(){
+      const q = (searchText || '').trim().toLowerCase();
 
-                if (result.result === 'success') {
-                    if (result.data.length < 2) {
-                         loaderText.innerText = 'Your sheet is empty. Use the "+ Add Recruit" button to get started.';
-                         document.getElementById('loader').style.display = 'flex';
-                         return;
-                    }
-                    tableHeaders = result.data.shift();
-                    originalData = result.data.map((row, index) => {
-                        row.originalIndex = index;
-                        return row;
-                    });
-                    populateFilters(originalData);
-                    applyFilters();
-                    document.getElementById('loader').style.display = 'none';
-                } else { throw new Error(result.message); }
-            } catch (error) {
-                console.error('Fetch Data Error:', error);
-                loaderText.innerText = `FETCH ERROR: ${error.message}.\nCheck console for details.`;
-            }
-        }
-        
-        function populateFilters(data) {
-            const listingTypeSet = new Set(data.map(row => row[COL_MAP.LISTING_TYPE]).filter(Boolean));
-            const populateSelect = (selectId, optionsSet) => {
-                const select = document.getElementById(selectId);
-                select.innerHTML = `<option value="">${selectId.includes('status') ? 'Status (all)' : 'Listing Type (all)'}</option>`;
-                optionsSet.forEach(opt => select.innerHTML += `<option value="${opt}">${opt}</option>`);
-            };
-            populateSelect('filter-status', new Set(STATUS_OPTIONS));
-            populateSelect('filter-listing-type', listingTypeSet);
-            const bulkStatusSelect = document.getElementById('bulk-action-status');
-            bulkStatusSelect.innerHTML = `<option value="">Set Status to...</option>`;
-            STATUS_OPTIONS.forEach(opt => bulkStatusSelect.innerHTML += `<option value="${opt}">${opt}</option>`);
-        }
+      filtered = rows.filter(r => {
+        const okStatus = !selectedStatus || r.status === selectedStatus;
+        const okAgency = !selectedAgency || r.agency === selectedAgency;
 
-        function applyFilters() {
-            const searchTerm = document.getElementById('search-box').value.toLowerCase();
-            const statusFilter = document.getElementById('filter-status').value;
-            const listingTypeFilter = document.getElementById('filter-listing-type').value;
+        const hay = [
+          r.name, r.surname, r.phone, r.agency, r.suburb, r.listingType, r.status
+        ].map(v => String(v || '').toLowerCase());
+        const okSearch = !q || hay.some(v => v.includes(q));
 
-            const filteredData = originalData.filter(row => {
-                const searchString = [row[COL_MAP.NAME], row[COL_MAP.SURNAME], row[COL_MAP.SUBURB], row[COL_MAP.AGENCY]].join(' ').toLowerCase();
-                return searchString.includes(searchTerm) && 
-                       (!statusFilter || (row[COL_MAP.STATUS] && String(row[COL_MAP.STATUS]).trim() === statusFilter)) &&
-                       (!listingTypeFilter || row[COL_MAP.LISTING_TYPE] === listingTypeFilter);
-            });
-            renderTable(filteredData);
-            updateDashboardStats();
-        }
-        
-        function resetFilters() {
-            document.getElementById('search-box').value = '';
-            document.getElementById('filter-status').value = '';
-            document.getElementById('filter-listing-type').value = '';
-            applyFilters();
-        }
+        return okStatus && okAgency && okSearch;
+      });
 
-        function renderTable(data) {
-            const tableHead = document.querySelector('thead tr');
-            const orderedHeaders = DISPLAY_ORDER.map(i => tableHeaders[i]);
-            tableHead.innerHTML = `<th class="px-2 py-2"><input type="checkbox" id="select-all-checkbox"></th>` + orderedHeaders.map(h => `<th scope="col" class="px-4 py-2 text-xs">${h}</th>`).join('');
-            document.getElementById('select-all-checkbox').addEventListener('change', (e) => {
-                document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
-            });
+      renderTable();
+      adjustTableHeight();
+    }
 
-            const tableBody = document.getElementById('table-body');
-            if (data.length === 0) {
-                 tableBody.innerHTML = `<tr><td colspan="${tableHeaders.length + 1}" class="text-center p-8">No matching records found.</td></tr>`;
-                 return;
-            }
-            
-            tableBody.innerHTML = data.map(row => {
-                const originalIndex = row.originalIndex;
-                const orderedRow = DISPLAY_ORDER.map(i => row[i]);
-                return `
-                <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700">
-                    <td class="px-2 py-1"><input type="checkbox" class="row-checkbox" data-original-index="${originalIndex}"></td>
-                    ${orderedRow.map((cell, index) => {
-                        const originalColIndex = DISPLAY_ORDER[index];
-                        const content = cell ?? '';
-                        if (originalColIndex === COL_MAP.STATUS) {
-                            const options = STATUS_OPTIONS.map(opt => `<option value="${opt}" ${content === opt ? 'selected' : ''}>${opt}</option>`).join('');
-                            return `<td class="px-4 py-1"><select class="status-select-in-table bg-gray-700 border border-gray-600 rounded-md p-1 text-gray-50 text-xs" data-original-index="${originalIndex}">${options}</select></td>`;
-                        }
-                        if (originalColIndex === COL_MAP.WHATSAPP_LINK && String(content).startsWith('http')) {
-                            return `<td class="px-4 py-1"><a href="${content}" target="_blank" class="text-green-400 hover:underline font-semibold text-xs">Open Chat</a></td>`;
-                        }
-                        return `<td class="px-4 py-1 text-xs">${content}</td>`;
-                    }).join('')}
-                </tr>
-            `}).join('');
-        }
+    function renderTable(){
+      const tb = $('#tbody');
+      tb.innerHTML = '';
+      for(const r of filtered){
+        const tr = document.createElement('tr');
 
-        function updateDashboardStats() {
-            const statsContainer = document.getElementById('stats-container');
-            const progressBarContainer = document.getElementById('progress-bar-container');
-            const legendContainer = document.getElementById('progress-bar-legend');
-            statsContainer.innerHTML = '';
-            progressBarContainer.innerHTML = '';
-            legendContainer.innerHTML = '';
+        const tdSel = document.createElement('td');
+        const cb = document.createElement('input'); cb.type='checkbox'; cb.dataset.idx = r.originalIndex; tdSel.appendChild(cb); tr.appendChild(tdSel);
 
-            // Main Total Card
-            statsContainer.innerHTML += `
-                <div class="bg-gray-900 p-2 rounded-lg flex flex-col items-center justify-center text-center col-span-full sm:col-span-1 md:col-span-1">
-                    <span class="text-2xl font-bold text-white">${originalData.length}</span>
-                    <span class="text-xs text-gray-400">Total Leads</span>
-                </div>
-            `;
-            
-            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6'];
+        const tdType = document.createElement('td'); tdType.innerHTML = `<span class="tag">${escapeHtml(r.listingType||'')}</span>`; tr.appendChild(tdType);
 
-            STATUS_OPTIONS.forEach((status, index) => {
-                const count = originalData.filter(r => r[COL_MAP.STATUS] && String(r[COL_MAP.STATUS]).trim().toLowerCase() === status.toLowerCase()).length;
-                if (count > 0) {
-                    const color = colors[index % colors.length];
-                    
-                    // Stat Card
-                    statsContainer.innerHTML += `
-                        <div class="bg-gray-800 p-2 rounded-lg flex flex-col items-center justify-center text-center">
-                            <span class="text-2xl font-bold text-white">${count}</span>
-                            <span class="text-xs text-gray-400 mt-1">${status}</span>
-                        </div>
-                    `;
+        const tdWA = document.createElement('td');
+        if(r.waLink){ const a=document.createElement('a'); a.className='link'; a.href=r.waLink; a.target='_blank'; a.rel='noopener'; a.textContent='Open'; tdWA.appendChild(a); }
+        tr.appendChild(tdWA);
 
-                    // Progress Bar Segment
-                    const percentage = (count / originalData.length) * 100;
-                    progressBarContainer.innerHTML += `
-                        <div class="progress-bar-segment flex items-center justify-center text-xs font-semibold text-white" style="width: ${percentage}%; background-color: ${color};" title="${status}: ${count} (${percentage.toFixed(1)}%)">
-                           ${percentage > 8 ? count : ''}
-                        </div>
-                    `;
-                    
-                    // Legend Item
-                    legendContainer.innerHTML += `
-                        <div class="flex items-center">
-                            <span class="inline-block w-2.5 h-2.5 rounded-full mr-1.5" style="background-color: ${color};"></span>
-                            <span>${status} (${count})</span>
-                        </div>
-                    `;
-                }
-            });
-        }
+        const tdStatus = document.createElement('td');
+        const sel = makeSelect(getStatusOptions(), r.status||'');
+        sel.onchange = async (ev)=>{
+          const newStatus = ev.target.value;
+          const oldStatus = r.status;
+          try{
+            lockRow(tr,true);
+            await apiPost('updateSingleStatus', { rowIndex: r.originalIndex, newStatus });
+            r.status = newStatus;
+            renderStatusTabs();
+            applyFilters(); // immediate move between tabs
+            toast('Status updated');
+          }catch(e){
+            console.error(e);
+            toast('Failed to update status', 2800);
+            ev.target.value = oldStatus || '';
+          }finally{
+            lockRow(tr,false);
+          }
+        };
+        tdStatus.appendChild(sel); tr.appendChild(tdStatus);
 
-        function clearSelection() {
-            document.querySelectorAll('.row-checkbox:checked').forEach(cb => cb.checked = false);
-            document.getElementById('select-all-checkbox').checked = false;
-        }
+        const tdName = document.createElement('td'); tdName.textContent = r.name || ''; tr.appendChild(tdName);
+        const tdSurname = document.createElement('td'); tdSurname.textContent = r.surname || ''; tr.appendChild(tdSurname);
+        const tdPhone = document.createElement('td'); tdPhone.textContent = r.phone || ''; tr.appendChild(tdPhone);
 
-        function openModal() {
-            const modal = document.getElementById('add-recruit-modal');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.add('fade-in');
-                modal.querySelector('.modal-content').classList.add('scale-in');
-            }, 10);
-        }
+        const tdNotes = document.createElement('td');
+        const ta = document.createElement('textarea'); ta.className='input note'; ta.value = r.notes||''; tdNotes.appendChild(ta);
+        const save = document.createElement('button'); save.className='btn small'; save.textContent='Save'; save.onclick = async ()=>{
+          try{ lockRow(tr,true); await apiPost('updateSingleNote', { rowIndex: r.originalIndex, newNote: ta.value }); r.notes = ta.value; toast('Note saved'); }
+          catch(e){ console.error(e); toast('Failed to save note', 2800); }
+          finally{ lockRow(tr,false); }
+        };
+        tdNotes.appendChild(save); tr.appendChild(tdNotes);
 
-        function closeModal() {
-            const modal = document.getElementById('add-recruit-modal');
-            modal.classList.remove('fade-in');
-            modal.querySelector('.modal-content').classList.remove('scale-in');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-        }
+        const tdAgency = document.createElement('td'); tdAgency.textContent = r.agency || ''; tr.appendChild(tdAgency);
+        const tdSuburb = document.createElement('td'); tdSuburb.textContent = r.suburb || ''; tr.appendChild(tdSuburb);
 
-        async function handleAddRecruit(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const payload = Object.fromEntries(formData.entries());
-            await callScriptFunctionAndRefresh('addNewRecruit', payload);
-            closeModal();
-            e.target.reset();
-        }
+        tb.appendChild(tr);
+      }
+      $('#checkAll').checked = false;
+    }
 
-        async function callScriptFunction(action, payload = {}) {
-            return new Promise(async (resolve) => {
-                const loader = document.getElementById('loader');
-                const loaderText = document.getElementById('loader-text');
-                loaderText.innerText = `Executing: ${action}...`;
-                loader.style.display = 'flex';
-                try {
-                    const response = await fetch(WEB_APP_URL, {
-                        method: 'POST', mode: 'cors', cache: 'no-cache',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action, payload })
-                    });
-                    const result = await response.json();
-                    if (result.result === 'success') {
-                        resolve({ success: true, message: result.message });
-                    } else { throw new Error(result.message); }
-                } catch (error) {
-                    alert(`An error occurred: ${error.message}`);
-                    console.error(`Error calling ${action}:`, error);
-                    resolve({ success: false });
-                } finally {
-                    loader.style.display = 'none';
-                }
-            });
-        }
-        
-        async function callScriptFunctionAndRefresh(action, payload = {}) {
-            const result = await callScriptFunction(action, payload);
-            if(result.success) {
-                alert(`Success: ${result.message}`);
-                fetchData();
-            }
-        }
-    </script>
+    function selectedIndices(){ return $$('#tbody input[type="checkbox"]:checked').map(cb=>parseInt(cb.dataset.idx,10)); }
+    function lockRow(tr, lock){ tr.style.opacity = lock? .6 : 1; }
+
+    function adjustTableHeight(){
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const topbar = document.querySelector('.topbar');
+      const pipeline = document.getElementById('pipelineCard');
+      const tableWrap = document.getElementById('tableWrap');
+      if(!tableWrap) return;
+      const padding = 32;
+      const topH = (topbar?.offsetHeight||0) + (pipeline?.offsetHeight||0) + padding;
+      const maxH = Math.max(240, vh - topH - 24);
+      tableWrap.style.maxHeight = maxH + 'px';
+    }
+
+    async function load(){
+      $('#tbody').innerHTML = '<tr><td colspan="10">Loading…</td></tr>';
+      try{
+        const j = await apiGet();
+        if(j.result!=='success') throw new Error(j.message||'Unknown error');
+        const data = j.data||[];
+        if(!data.length){ rows=[]; filtered=[]; renderStatusTabs(); renderTable(); adjustTableHeight(); return; }
+        const dataRows = data.slice(1);
+        rows = dataRows.map((r,i)=>buildRowObject(r,i));
+        populateFilters();
+        renderStatusTabs();
+        applyFilters();
+        $('#openSheetBtn').href = SHEET_URL_HINT;
+      } catch(e){
+        console.error(e);
+        toast('Load failed: ' + e.message, 3200);
+        $('#tbody').innerHTML = '<tr><td colspan="10" class="danger">Failed to load. Check Apps Script deployment access.</td></tr>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      // Restore search input value (in case populateFilters ran earlier)
+      const sEl = document.getElementById('fltSearch');
+      if (sEl) sEl.value = searchText;
+
+      $('#fltStatus').addEventListener('change', ()=>{ selectedStatus = $('#fltStatus').value; localStorage.setItem('fltStatus', selectedStatus); markActiveStatusTabs(); applyFilters(); });
+      $('#fltAgency').addEventListener('change', ()=>{ selectedAgency = $('#fltAgency').value; localStorage.setItem('fltAgency', selectedAgency); applyFilters(); });
+      $('#resetFilters').addEventListener('click', ()=>{
+        selectedStatus=''; selectedAgency=''; searchText='';
+        localStorage.setItem('fltStatus',''); localStorage.setItem('fltAgency',''); localStorage.setItem('fltSearch','');
+        $('#fltStatus').value=''; $('#fltAgency').value=''; if (sEl) sEl.value='';
+        markActiveStatusTabs(); applyFilters();
+      });
+
+      // NEW: search listener (debounced)
+      if (sEl) {
+        sEl.addEventListener('input', debounce(()=>{
+          searchText = sEl.value;
+          localStorage.setItem('fltSearch', searchText);
+          applyFilters();
+        }, 250));
+      }
+
+      $('#checkAll').addEventListener('change', (e)=>{ $$('#tbody input[type="checkbox"]').forEach(cb=>cb.checked=e.target.checked); });
+      $('#clearChecks').addEventListener('click', ()=>{ $$('#tbody input[type="checkbox"]').forEach(cb=>cb.checked=false); $('#checkAll').checked=false; });
+      $('#applyBulk').addEventListener('click', async ()=>{
+        const idxs = selectedIndices(); const st = $('#bulkStatus').value; if(!idxs.length) return toast('Select some rows'); if(!st) return toast('Choose a bulk status');
+        try{ await apiPost('bulkUpdateStatus', { rowIndices: idxs, newStatus: st }); toast('Bulk update complete'); await load(); }
+        catch(e){ console.error(e); toast('Bulk update failed', 3000); }
+      });
+
+      $('#refreshBtn').addEventListener('click', load);
+      $('#prepareBtn').addEventListener('click', async ()=>{ try{ await apiPost('prepareSheet',{}); toast('Prepared'); load(); }catch(e){ toast('Prepare failed'); }});
+      $('#rerunBtn').addEventListener('click', async ()=>{ try{ const r = await apiPost('rerunAutomations',{}); toast(r.message||'Re-run complete'); load(); }catch(e){ toast('Re-run failed'); }});
+      $('#fixBtn').addEventListener('click', async ()=>{ try{ const r = await apiPost('fixDataValidation',{}); toast(r.message||'Fixed'); load(); }catch(e){ toast('Fix failed'); }});
+
+      window.addEventListener('resize', adjustTableHeight);
+      load();
+      adjustTableHeight();
+    });
+  </script>
 </body>
 </html>
